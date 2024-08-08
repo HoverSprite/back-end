@@ -1,0 +1,591 @@
+Subject: [PATCH] handling adddata
+first
+---
+Index: .gitignore
+===================================================================
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/.gitignore	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,33 @@
++HELP.md
++target/
++!.mvn/wrapper/maven-wrapper.jar
++!**/src/main/**/target/
++!**/src/test/**/target/
++
++### STS ###
++.apt_generated
++.classpath
++.factorypath
++.project
++.settings
++.springBeans
++.sts4-cache
++
++### IntelliJ IDEA ###
++.idea
++*.iws
++*.iml
++*.ipr
++
++### NetBeans ###
++/nbproject/private/
++/nbbuild/
++/dist/
++/nbdist/
++/.nb-gradle/
++build/
++!**/src/main/**/build/
++!**/src/test/**/build/
++
++### VS Code ###
++.vscode/
+Index: .mvn/wrapper/maven-wrapper.properties
+===================================================================
+diff --git a/.mvn/wrapper/maven-wrapper.properties b/.mvn/wrapper/maven-wrapper.properties
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/.mvn/wrapper/maven-wrapper.properties	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,19 @@
++# Licensed to the Apache Software Foundation (ASF) under one
++# or more contributor license agreements.  See the NOTICE file
++# distributed with this work for additional information
++# regarding copyright ownership.  The ASF licenses this file
++# to you under the Apache License, Version 2.0 (the
++# "License"); you may not use this file except in compliance
++# with the License.  You may obtain a copy of the License at
++#
++#   https://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing,
++# software distributed under the License is distributed on an
++# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++# KIND, either express or implied.  See the License for the
++# specific language governing permissions and limitations
++# under the License.
++wrapperVersion=3.3.2
++distributionType=only-script
++distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.7/apache-maven-3.9.7-bin.zip
+Index: pom.xml
+===================================================================
+diff --git a/pom.xml b/pom.xml
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/pom.xml	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,125 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
++	<modelVersion>4.0.0</modelVersion>
++	<parent>
++		<groupId>org.springframework.boot</groupId>
++		<artifactId>spring-boot-starter-parent</artifactId>
++		<version>3.4.0-SNAPSHOT</version>
++		<relativePath/> <!-- lookup parent from repository -->
++	</parent>
++	<groupId>com.example</groupId>
++	<artifactId>project</artifactId>
++	<version>0.0.1-SNAPSHOT</version>
++	<name>project</name>
++	<description>Demo project for Spring Boot</description>
++	<url/>
++	<licenses>
++		<license/>
++	</licenses>
++	<developers>
++		<developer/>
++	</developers>
++	<scm>
++		<connection/>
++		<developerConnection/>
++		<tag/>
++		<url/>
++	</scm>
++	<properties>
++		<java.version>17</java.version>
++	</properties>
++	<dependencies>
++		<dependency>
++			<groupId>org.springframework.boot</groupId>
++			<artifactId>spring-boot-starter-data-jpa</artifactId>
++		</dependency>
++<!--		<dependency>-->
++<!--			<groupId>org.springframework.boot</groupId>-->
++<!--			<artifactId>spring-boot-starter-security</artifactId>-->
++<!--		</dependency>-->
++		<dependency>
++			<groupId>org.springframework.boot</groupId>
++			<artifactId>spring-boot-starter-validation</artifactId>
++		</dependency>
++		<dependency>
++			<groupId>org.springframework.boot</groupId>
++			<artifactId>spring-boot-starter-web</artifactId>
++		</dependency>
++
++		<dependency>
++			<groupId>org.postgresql</groupId>
++			<artifactId>postgresql</artifactId>
++			<scope>runtime</scope>
++		</dependency>
++		<dependency>
++			<groupId>org.projectlombok</groupId>
++			<artifactId>lombok</artifactId>
++			<optional>true</optional>
++		</dependency>
++		<dependency>
++			<groupId>org.springframework.boot</groupId>
++			<artifactId>spring-boot-starter-test</artifactId>
++			<scope>test</scope>
++		</dependency>
++<!--		<dependency>-->
++<!--			<groupId>org.springframework.security</groupId>-->
++<!--			<artifactId>spring-security-test</artifactId>-->
++<!--			<scope>test</scope>-->
++<!--		</dependency>-->
++	</dependencies>
++
++	<build>
++		<plugins>
++			<plugin>
++				<groupId>org.springframework.boot</groupId>
++				<artifactId>spring-boot-maven-plugin</artifactId>
++				<configuration>
++					<excludes>
++						<exclude>
++							<groupId>org.projectlombok</groupId>
++							<artifactId>lombok</artifactId>
++						</exclude>
++					</excludes>
++				</configuration>
++			</plugin>
++		</plugins>
++	</build>
++	<repositories>
++		<repository>
++			<id>spring-milestones</id>
++			<name>Spring Milestones</name>
++			<url>https://repo.spring.io/milestone</url>
++			<snapshots>
++				<enabled>false</enabled>
++			</snapshots>
++		</repository>
++		<repository>
++			<id>spring-snapshots</id>
++			<name>Spring Snapshots</name>
++			<url>https://repo.spring.io/snapshot</url>
++			<releases>
++				<enabled>false</enabled>
++			</releases>
++		</repository>
++	</repositories>
++	<pluginRepositories>
++		<pluginRepository>
++			<id>spring-milestones</id>
++			<name>Spring Milestones</name>
++			<url>https://repo.spring.io/milestone</url>
++			<snapshots>
++				<enabled>false</enabled>
++			</snapshots>
++		</pluginRepository>
++		<pluginRepository>
++			<id>spring-snapshots</id>
++			<name>Spring Snapshots</name>
++			<url>https://repo.spring.io/snapshot</url>
++			<releases>
++				<enabled>false</enabled>
++			</releases>
++		</pluginRepository>
++	</pluginRepositories>
++
++</project>
+Index: src/main/java/com/example/project/ProjectApplication.java
+===================================================================
+diff --git a/src/main/java/com/example/project/ProjectApplication.java b/src/main/java/com/example/project/ProjectApplication.java
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/src/main/java/com/example/project/ProjectApplication.java	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,13 @@
++package com.example.project;
++
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.autoconfigure.SpringBootApplication;
++
++@SpringBootApplication
++public class ProjectApplication {
++
++	public static void main(String[] args) {
++		SpringApplication.run(ProjectApplication.class, args);
++	}
++
++}
+Index: src/main/java/com/example/project/config/ApplicationConfig.java
+===================================================================
+diff --git a/src/main/java/com/example/project/config/ApplicationConfig.java b/src/main/java/com/example/project/config/ApplicationConfig.java
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/src/main/java/com/example/project/config/ApplicationConfig.java	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,18 @@
++package com.example.project.config;
++
++import com.example.project.interceptor.LogHandlerInterceptor;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
++import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
++
++@Configuration
++public class ApplicationConfig implements WebMvcConfigurer {
++
++    @Autowired
++    private LogHandlerInterceptor logHandlerInterceptor;
++    @Override
++    public void addInterceptors(InterceptorRegistry registry) {
++        registry.addInterceptor(logHandlerInterceptor);
++    }
++}
+Index: src/main/java/com/example/project/interceptor/LogHandlerInterceptor.java
+===================================================================
+diff --git a/src/main/java/com/example/project/interceptor/LogHandlerInterceptor.java b/src/main/java/com/example/project/interceptor/LogHandlerInterceptor.java
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/src/main/java/com/example/project/interceptor/LogHandlerInterceptor.java	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,30 @@
++package com.example.project.interceptor;
++
++import jakarta.servlet.http.HttpServletRequest;
++import jakarta.servlet.http.HttpServletResponse;
++import lombok.extern.slf4j.Slf4j;
++import org.springframework.stereotype.Component;
++import org.springframework.web.servlet.HandlerInterceptor;
++import org.springframework.web.servlet.ModelAndView;
++
++@Slf4j
++@Component
++public class LogHandlerInterceptor  implements HandlerInterceptor {
++    @Override
++    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
++        log.info("LongHandlerInterceptor::preHandle");
++        return true;
++    }
++
++    @Override
++    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
++        log.info("LongHandlerInterceptor::postHandle");
++        HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
++    }
++
++    @Override
++    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
++        log.info("LongHandlerInterceptor::afterCompletion");
++        HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
++    }
++}
+Index: src/main/java/com/example/project/model/entity/Person.java
+===================================================================
+diff --git a/src/main/java/com/example/project/model/entity/Person.java b/src/main/java/com/example/project/model/entity/Person.java
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/src/main/java/com/example/project/model/entity/Person.java	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,23 @@
++package com.example.project.model.entity;
++
++import jakarta.persistence.*;
++import lombok.*;
++
++@Data
++@Entity
++@Table(name = "PERSON")
++@Getter
++@Setter
++@Builder
++@AllArgsConstructor
++@NoArgsConstructor
++public class Person {
++
++    @Id
++    @Column(name = "PERSON_ID")
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private long id;
++
++    @Column(name = "NAME")
++    private String name;
++}
+Index: src/main/java/com/example/project/repository/PersonRepository.java
+===================================================================
+diff --git a/src/main/java/com/example/project/repository/PersonRepository.java b/src/main/java/com/example/project/repository/PersonRepository.java
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/src/main/java/com/example/project/repository/PersonRepository.java	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,9 @@
++package com.example.project.repository;
++
++import com.example.project.model.entity.Person;
++import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public interface PersonRepository extends JpaRepository<Person, Long> {
++}
+Index: src/main/resources/application.properties
+===================================================================
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+new file mode 100644
+--- /dev/null	(revision acd63ec5ee5808f5f155e5a0659b460ca410348b)
++++ b/src/main/resources/application.properties	(revision acd63ec5ee5808f5f155e5a0659b460ca410348b)
+@@ -0,0 +1,12 @@
++spring.application.name=project
++spring.datasource.driver-class-name=org.postgresql.Driver
++spring.datasource.url=jdbc:postgresql://localhost:5432/hoversprite
++spring.datasource.username=postgres
++spring.datasource.password=admin
++
++
++#Configure
++spring.jpa.hibernate.ddl-auto=update
++spring.jpa.show-sql=true
++spring.jpa.properties.hibernate.format-sql=true
++spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+\ No newline at end of file
+Index: src/test/java/com/example/project/ProjectApplicationTests.java
+===================================================================
+diff --git a/src/test/java/com/example/project/ProjectApplicationTests.java b/src/test/java/com/example/project/ProjectApplicationTests.java
+new file mode 100644
+--- /dev/null	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
++++ b/src/test/java/com/example/project/ProjectApplicationTests.java	(revision 93042c5f57431afa15bd60560d3bdcf1913ec784)
+@@ -0,0 +1,13 @@
++package com.example.project;
++
++import org.junit.jupiter.api.Test;
++import org.springframework.boot.test.context.SpringBootTest;
++
++@SpringBootTest
++class ProjectApplicationTests {
++
++	@Test
++	void contextLoads() {
++	}
++
++}
+Index: src/main/java/com/example/project/controller/PersonController.java
+===================================================================
+diff --git a/src/main/java/com/example/project/controller/PersonController.java b/src/main/java/com/example/project/controller/PersonController.java
+new file mode 100644
+--- /dev/null	(revision acd63ec5ee5808f5f155e5a0659b460ca410348b)
++++ b/src/main/java/com/example/project/controller/PersonController.java	(revision acd63ec5ee5808f5f155e5a0659b460ca410348b)
+@@ -0,0 +1,30 @@
++package com.example.project.controller;
++
++
++import com.example.project.model.entity.Person;
++import com.example.project.service.PersonService;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.web.bind.annotation.CrossOrigin;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RestController;
++
++import java.util.List;
++
++@RestController
++@CrossOrigin
++public class PersonController {
++
++    @Autowired
++    private PersonService personService;
++
++    @GetMapping("/persons")
++    public List<Person> getPersonList() {
++        return personService.getPersonList();
++    }
++
++    @PostMapping("/addPerson")
++    public void addPerson() {
++        personService.addPerson();
++    }
++}
+Index: src/main/java/com/example/project/service/PersonService.java
+===================================================================
+diff --git a/src/main/java/com/example/project/service/PersonService.java b/src/main/java/com/example/project/service/PersonService.java
+new file mode 100644
+--- /dev/null	(revision acd63ec5ee5808f5f155e5a0659b460ca410348b)
++++ b/src/main/java/com/example/project/service/PersonService.java	(revision acd63ec5ee5808f5f155e5a0659b460ca410348b)
+@@ -0,0 +1,12 @@
++package com.example.project.service;
++
++import com.example.project.model.entity.Person;
++
++import java.util.List;
++
++public interface PersonService {
++
++    public List<Person> getPersonList();
++
++    public void addPerson();
++}
+Index: src/main/java/com/example/project/service/impl/PersonServiceImpl.java
+===================================================================
+diff --git a/src/main/java/com/example/project/service/impl/PersonServiceImpl.java b/src/main/java/com/example/project/service/impl/PersonServiceImpl.java
+new file mode 100644
+--- /dev/null	(revision acd63ec5ee5808f5f155e5a0659b460ca410348b)
++++ b/src/main/java/com/example/project/service/impl/PersonServiceImpl.java	(revision acd63ec5ee5808f5f155e5a0659b460ca410348b)
+@@ -0,0 +1,25 @@
++package com.example.project.service.impl;
++
++import com.example.project.model.entity.Person;
++import com.example.project.repository.PersonRepository;
++import com.example.project.service.PersonService;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.stereotype.Service;
++
++import java.util.List;
++
++@Service
++public class PersonServiceImpl implements PersonService {
++
++    @Autowired
++    private PersonRepository personRepository;
++    @Override
++    public List<Person> getPersonList() {
++        return personRepository.findAll();
++    }
++
++    @Override
++    public void addPerson() {
++        personRepository.save(Person.builder().name("Huy Anh").build());
++    }
++}
+diff --git a/mvnw b/mvnw
+new file mode 100644
+index 0000000000000000000000000000000000000000..5edf9e62373cdc5566e124c6e6989513df92ff0c
+GIT binary patch
+literal 10925
+zc$~c&YjfJh_H#Ys|8Sx>0URV^C-uF-A-NRegf<2);J9g$VPt6m)k0GB06UKFZ@=g4
+zuAYd-nQ5D8ZL@p!?0LVIhYuQ;meU9pyE_j-{R{sQzIT?voPe1Sx)3fHv_0LxUt@O`
+zu63WmsT(<_9$Kyg)%N(b2KbTr;5v*>yFM&kgfd(w^sUP%#06Vm1byx^wq#BiXaHlz
+zIQsrz((80#X4(9_X$9gO60o+y1;SVXtX=;KW{65RO^dG9ZLl0%SaL$>pwH&IZ(7bA
+zul8<yYrY7<T|3MV7M6$iO^B88X-rHY5XaXduQzTaS;=rMg;9t1h=^D|)Sf~W0qBq-
+zca_>PKfTm%z;Q!}0+wP2c5N^(L~@a^rDt2ZWAM|GyW|d}@q<L-UWPit>zoyEXIU`N
+zLp)6g@ZTZ~y`b4>tk-Kz=M-zMKX1f5Hr}CV`{S;PRLeu>j?IDqrS(T-`6%Pd8_+$Z
+z%Fr*7R$E__2DzfR0U#A?A0_V0>vTGZjUcP0RA@1Y$a)q4#inx|DeW=z#tQt@9{0v|
+zxadvZ4$dcV(H@Q3{YkGohQSCrgZ@cx(i`;g(<!w3AL!&Sz5YoZ7>W$9V%MHeOdzEe
+zNtBrxdx~iwYms^iJZ4xk%Ru&=d8E%7%-t399WoY=`AaJx)donUiRQ7iLT*$69o^tf
+z`|Dlq?{H#izGwQ1IdI{lijj>V)cr8>;8G8b1q6m~d0`z^(z2gv&$L5nB?C`7S-1Zl
+zR=OXQ(kP7Z=l1*d^zGoR3o6*IAtD3XtPVe)`~nMiN!H@mQ<GaSkR}s-({^<e?VU(m
+zSvvf#uXMDq$QS+raQ41`F&%Y>gY(flMD8=sg~+#&eyQIW2`N(GNz6`01&QQ*+#U7X
+zXWa(>G;EK@7lY9W;zU>Vx!yfJ2r$Z+<#;ow-gieo4aUT5=tryx%;BDcQoMALEZdzQ
+zgUK$Vc@qJ2Lm1_9<*cQ^kHIA)4w?{PbZ{hq8--pJ{vEazun<%h&31P_g0gp;<w3nu
+z;6Y1J3!mZZSKz?c!XyXd)Nz8y^IShf<9ATMD>n7?a8a$nEqK1=gfn;)eEQ@d{sZM0
+z?sj(!(vY%OjU0W+Y6^yt-JQ;dHy6GBK756<UjNO-er<OL;3KGCh^)kjh$c=-veH64
+z#?72=MBzk^b&Us-U8SZFo+4T40r_ifIjGejB@y8Gcz1^dx*^yl)(LCp?1UQx{~JGW
+z2~Np2r)0~7oen?5Jm^E`X1=CCjqqod^X39WloLc4AL&*MDEJp{pA*d@S-~ZnQF_#!
+z8_W=BUKlDvH$q=E39B_Di8z}QIVLM{2qXr|Nulw(&#)Y55SayNBDMF^Sta1^h_2c0
+z{YqvZU^wtG9<sz~gE(elfMrG$l3fQe5-FP2wo7wxe*$PoNM;A@&u~+H^KHa26k&}4
+zxp*F=0>U%Wr1HyRJufPx%UHOeP_dB4HRh}=-*u>Rp<rlnheyRxt~c4taxkbFuJ1D=
+zv~TJd!i2vYx<e3t<Y)@KdVE;CB)tG}k@;c1{gmPElTrtaWVrUJgyl~P<-hVh12;{V
+z2@2UY#>658J_{q?frEHuW{JPV?^HRdYN|141xc;IlSF%!$l)vMj0&73`NH9=hRIe9
+zC$jAXO70=tibr~}fw2J<)687<_uOU_uFH6mw252EY7&47JMmWDU{Z6TTZHfv!tyGh
+zNHA<q-r|Z+8c)@a41L>b@){F*qMvsnd@b}~K^{#p#kQ`{d?}lb`9iZvyB*g=Dbin4
+z0T+id{Dcy}J!leti`G+GTQ8_|m9Yo`IOC=(E;klBKY{Cy#IJ|1@02^~s*BcMwOU=k
+zK0G^sC$Lw2*O_)EABNplC&?BjD3v`zqtt5f2%aClc>dz(UxzP_YBhmG(j-ySn#mgs
+zNKjl;!r5C$0m$^rV}Fy!_ifpZvbIog_Dms--5ww`N3*+QT1n8~NOrM;P{ARoh95xT
+zF4Ht|b}?!Xhux8S@a#oXEMYT(AOY0}mQ4!dg(nmB21-6;0hVvrbQrpi(FQ}bP<~Jc
+z49fUZ6siuJVU-?eG15MMVxoZY+0tF{^44{I`vy%fWIh(nRE;}qO=r>S{)njl2t+}K
+z2FD9xv{Gu|Vx;Wa4Y2^ogg}f{n6E$&V2SW+s>T+SS1v?`)iQ!o9t8@QCW`(mvJ0vS
+zm5)u%UGsA#F<uWVOqQ$N&auoRF5S2g&2Ekt`r(g9<7k-_l>unzJdL#|bQ`>8Q{^Yk
+z^IiNET9nL$UH4AMEv2R4X)HihAFkL926j7Qv5m|6<rX){Y%K2Y1^Q~m1+;roJ)Pso
+z@MMh_8Bk7rt$g`U(1>b<JON(f_R~j={kz7!I9JFaL}5{&I*E5^=b*&VhXhm9hr~wK
+z1mAmkQW6%gfB0~}Atfx1BSKT%$4sV)3K3m+N;!enHMF#8(iLDGKbc@%-x3!$2%?eI
+z-f%SNbjRbtXxbii-u5Ql&g6WAaiC=9;^_IaL-npHOIA?zTCDc{_SwnN^JZGU$^}`)
+z=EO9#^^gj^mMk|_eQ6#&m)dKd=svFRU;q1Pdh~qDL6gIjp40v1H;?JQu}BZTvz+K!
+z-nWfXn_zPH?aLS}a$84Ogo&}k2xXlOo;=Ni4auDXKwR#ti4d2yIv<93R1)*{PBxpF
+z%=Rs!1XR}kH$1VmX;zO^Zb5hIUKxJvi{&YC3y?Lt+V`3p$B;Ru;41nCSv6&IwCpkj
+zG@}vY8i}jWi_k>oCg1*2Ff?@Ah>!*B>)Y?UeO^2exM+QOr;U9FMtY|S|3lY2Ogxi>
+z5HxPZovPsYrPRf%dPV}tqWUt{@vFPWOR5@P@euMQNvo2wO#CP+B@4E<DTmEiu&<PW
+z@xr12*+=s#(YgpGrO;=(<&>PDtw(4l-+hR-xRKFOp$-}{#2xExVX3L^-O_K0n1|_+
+zEzoxb#cicPy=&}MGbJ4=rvS<OW3(;o=%!rHab?2m==?|{H!6Yrs3d2Mamh|t@ye7J
+z-hu2%XQ0&oAElUD_?fLoWJw@eTr-C|S9{0f7G*}$Xi;Dj|0y_Nvz<L1(<`LFN!#6_
+z0(xs|iZlQIYaUE6W>D~do$;2}`}iMi)Z#e6IV~nm*(zc-x6C>$BkTp1d<3_jAf_;y
+zi9@s|nm@r`rG&VOQivK@-+44~2$vpB+_)4cXT#~q;G+L-&_0=-^hVTLEw4g`AgYNe
+z?(yST&_&3cxDBjMx#a-HeAS<Us+Jv*gB7f6J#hryo)4kdp8z`Y8FYW`O^{&OTxN~J
+zz=8wA8m9|MPc*Z<!cU-j;=bEdom6}%g6)%dl1L%4=LDf{+qwB?(j8zjb0gbyDkxTq
+zMm7n$dT!)Lh%AAKSHvM`nx<sXoMeD!zPoI~hTCm{4qb#T%B@j6P42D4V=0^RZfqo4
+zsQcRd3)k&~q|wACH*yFf?Sxa^-6L5N_B)AMDLM0va4U56FmXyO+IM%RB9j02yw{yf
+zFWz(~Emg%@9b-;zr-ShXcla!{uyx-5tv76`f8<vu?NO^zxlez$NkOGja(Qu4Tw7eF
+zYgd9zhbDQp^@Z{07to_{k;af*)NDS%*sR8*Wf@K?m0CX1(p|Y@v_P(%JzPr$gSoRw
+z_Prm*I9Q1I`eh3`3<?>`TF+5uWrmd)IDZioaOfyl@$o(uKXO~*>wC8w+Gsw(Y+qbd
+z?n+V^sDqMdQ|>iMx}j^EaEcwac*&YEint|y%IxovhCvSy_mBpMOQk^{xit8CK^kO+
+z8`7Xfl!l72_8qA1{RL1Wza$0Y<@c9KZth*isEm)7x^YF=sM6<CC;U4Or<`X(GUo3(
+ztr9Nc@Q5vAGVsMvgzEdv^2!cuiI&v&p`j{!>2(Uce5rQ(C%Zd8c+sV88JLyOpCG*w
+zOM;L&X25CG92RQrh!_nmMCM`+{Q--mA84TAQvZWuO8|$`GcyP1<qPR9->KF(CV?-R
+z=Q(WsEtFLl-vpQ%HAKyvRTY$+l`4Q;Rw+d6{Rp9jZfBwUZQs{#Fpt-cITd$;HzAsU
+zo;?j%xfVUjS#&M0DL;M&)J6a`v;d!;P`dm<n?JB+_(5wqVKY6l!zyPgm2r9>NLDRZ
+zqo;B06n_L7J#tr5A)JqTny3e={Nj&KKXdxgAF4IY^_YWnF@0G@w)5zQ^yoq|kOvRM
+z!S-d~+EK`c{BcN2!gpQ{^glP1{M$}LzUu^Qi+n}A>!5+lX;<M{Cmy1SIWUEcc+{PE
+z4XDs@m!25>6>MMD89+~GnHR0>i$zV@+{_q!Ep_(P%?*AZE8eCQ=^9DuzmF<GlxldJ
+z`x^x!0%m-#BvNglNFo7mWa3JrH;dmU8CKN1u;%q6eNW|WTRr^o2!d!Ce{<q&<7pVE
+zSQ6j;$UM1~j^heL|4o<?3()9WGhNoT9HEjnK`n@93AwieIbB&W<BCX?JP>WNU660C
+za-y4d2ia!<fn<oKwwRxar|1;b<xM&Yu9UJ@;RP&xeI>qQbAFe*QBJz)k;s~5Gh@I}
+z5-(-xk;_GpyH`pG+_x^qCM>;5H8Qus;j707`S+Qv>Y_3+|Kzp7%|FEo=R*fF+P{#U
+z_yupfovn58Js=j4kx{eh$S>Gb5&>7J>8J=IEBrkh1A=9foo%&4**eAF){#Q36Q+OI
+zM1?H4LzZYthz|XeyKb3xc75OVvjtNUX-Yzh3_Nu~XbHfQe<$sd@pz0JSph3?W(;lo
+zn`j>0V`h=b(Hy@3RV64Aa6HT<5wZMTA(`KAmsK2IMKejBfQk_@@?Nc`*eO)Eyr0@A
+zZ}}>(_V4K`TZR;Iwwon7;zTIvoB=ZkTz{DrsKS13gC<=2E{Zz$rU+?}*{kq`xRC%~
+z-Sc{y{_zpBCOV7ds(dE1^{`SHuJIS|&5>J<9b$$o0&;UTY<~HyM@$7bW^DflzyB*#
+
+diff --git a/mvnw.cmd b/mvnw.cmd
+new file mode 100644
+index 0000000000000000000000000000000000000000..3445759c001a235ef61ab0e155e89698de5ec378
+GIT binary patch
+literal 7062
+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
+KxcbvG@xK9!QL88b
+
