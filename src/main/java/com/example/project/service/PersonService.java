@@ -6,7 +6,16 @@ import java.util.List;
 
 public interface PersonService {
 
-    public List<Person> getPersonList();
+    List<Person> getPersonList();
 
-    public void addPerson();
+    void addPerson(Person person);
+
+    boolean isEmailTaken(String emailAddress);
+
+    boolean isPhoneNumberTaken(String phoneNumber);
+
+    boolean authenticate(String emailOrPhone, String password);
+
+    boolean isValidPhoneNumber(String phoneNumber);
+    boolean isValidEmailAddress(String emailAddress);
 }
