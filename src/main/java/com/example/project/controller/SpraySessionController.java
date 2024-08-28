@@ -1,6 +1,7 @@
 package com.example.project.controller;
 
 import com.example.project.model.entity.SpraySession;
+import com.example.project.model.entity.WeekDayDto;
 import com.example.project.service.SpraySessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -45,12 +46,21 @@ public class SpraySessionController {
         return new ResponseEntity<>(availableSpraySessions, HttpStatus.OK);
     }
 
+    @GetMapping("/week")
+    public ResponseEntity<List<WeekDayDto>> getWeeklySchedule() {
+        List<WeekDayDto> weekSchedule = spraySessionService.getWeeklySchedule();
+        return new ResponseEntity<>(weekSchedule, HttpStatus.OK);
+    }
+
     // Create a new spray session
     @PostMapping
-    public ResponseEntity<SpraySession> createSpraySession(@RequestParam Long timeSlotId) {
-        SpraySession newSpraySession = spraySessionService.createSpraySession(timeSlotId);
+    public ResponseEntity<SpraySession> createSpraySession(@RequestParam Long timeSlotId,
+                                                           @RequestParam Boolean isAvailable,
+                                                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        SpraySession newSpraySession = spraySessionService.createSpraySession(timeSlotId, isAvailable, date);
         return new ResponseEntity<>(newSpraySession, HttpStatus.CREATED);
     }
+
 
 
     // Update an existing spray session
@@ -77,11 +87,12 @@ public class SpraySessionController {
 
     @GetMapping("/check-availability")
     public ResponseEntity<Boolean> checkAvailability(
-            @RequestParam("timeSlotId") Long timeSlotId,
+            @RequestParam("timeSlotId") Long timeSlotId,  // Ensure this matches your request
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         boolean isAvailable = spraySessionService.checkAvailability(timeSlotId, date);
         return new ResponseEntity<>(isAvailable, HttpStatus.OK);
     }
+
 
 
 }

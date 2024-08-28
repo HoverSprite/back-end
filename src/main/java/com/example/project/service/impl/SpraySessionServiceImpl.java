@@ -2,6 +2,8 @@ package com.example.project.service.impl;
 
 import com.example.project.model.entity.SpraySession;
 import com.example.project.model.entity.TimeSlot;
+import com.example.project.model.entity.TimeSlotDto;
+import com.example.project.model.entity.WeekDayDto;
 import com.example.project.repository.SpraySessionRepository;
 import com.example.project.repository.TimeSlotRepository;
 import com.example.project.service.SpraySessionService;
@@ -9,7 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -43,18 +49,16 @@ public class SpraySessionServiceImpl implements SpraySessionService {
 
 
     @Override
-    public SpraySession createSpraySession(Long timeSlotId) {
-        Optional<TimeSlot> timeSlot = timeSlotRepository.findById(timeSlotId);
+    public SpraySession createSpraySession(Long timeSlotId, Boolean isAvailable, LocalDate date) {
+        TimeSlot timeSlot = timeSlotRepository.findById(timeSlotId)
+                .orElseThrow(() -> new RuntimeException("TimeSlot not found with id: " + timeSlotId));
 
-        if (timeSlot.isPresent()) {
-            SpraySession spraySession = new SpraySession();
-            spraySession.setTimeSlot(timeSlot.get());
-            spraySession.setIsAvailable(true);
+        SpraySession spraySession = new SpraySession();
+        spraySession.setTimeSlot(timeSlot);
+        spraySession.setIsAvailable(isAvailable);
+        spraySession.setDate(date);
 
-            return spraySessionRepository.save(spraySession);
-        } else {
-            throw new RuntimeException("TimeSlot not found with id: " + timeSlotId);
-        }
+        return spraySessionRepository.save(spraySession);
     }
 
     @Override
@@ -84,5 +88,53 @@ public class SpraySessionServiceImpl implements SpraySessionService {
         return bookedSessions < 2;
     }
 
+
+    @Override
+    public List<WeekDayDto> getWeeklySchedule() {
+        List<WeekDayDto> weekSchedule = new ArrayList<>();
+
+        // Loop through each day of the week (starting from today)
+        LocalDate today = LocalDate.now();
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = today.plusDays(i);
+            WeekDayDto dayDto = new WeekDayDto();
+            dayDto.setDayName(date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH));
+            dayDto.setGregorianDate(date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            dayDto.setLunarDate(convertToLunarDate(date));  // Assuming this method exists
+
+            List<TimeSlotDto> timeSlots = getTimeSlotsForDate(date);
+            dayDto.setTimeSlots(timeSlots);
+
+            weekSchedule.add(dayDto);
+        }
+
+        return weekSchedule;
+    }
+
+    private List<TimeSlotDto> getTimeSlotsForDate(LocalDate date) {
+        List<TimeSlotDto> timeSlots = new ArrayList<>();
+
+        // Fetch all the time slots
+        List<TimeSlot> allTimeSlots = timeSlotRepository.findAll();
+
+        for (TimeSlot timeSlot : allTimeSlots) {
+            int bookedSessions = spraySessionRepository.countByTimeSlotAndDate(timeSlot, date);
+
+            TimeSlotDto timeSlotDto = new TimeSlotDto();
+            timeSlotDto.setId(timeSlot.getId());
+            timeSlotDto.setStartTime(timeSlot.getStartTime().toString());
+            timeSlotDto.setEndTime(timeSlot.getEndTime().toString());
+            timeSlotDto.setAvailable(bookedSessions < 2);  // Max 2 sessions per time slot
+
+            timeSlots.add(timeSlotDto);
+        }
+
+        return timeSlots;
+    }
+
+    private String convertToLunarDate(LocalDate date) {
+        // Implement this method based on your lunar calendar conversion logic
+        return "Lunar Date";  // Placeholder
+    }
 
 }

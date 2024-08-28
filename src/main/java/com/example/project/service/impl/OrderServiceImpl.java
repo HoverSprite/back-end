@@ -11,6 +11,7 @@ import com.example.project.service.SpraySessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,32 +31,65 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order createOrder(Order order) {
-        // Ensure the TimeSlot exists
-        Long timeSlotId = order.getSpraySession().getTimeSlot().getId();
-        Optional<TimeSlot> timeSlot = timeSlotRepository.findById(timeSlotId);
+        LocalDate serviceDate = order.getServiceDate();
+        SpraySession spraySession = order.getSpraySession();
+        TimeSlot timeSlot = spraySession.getTimeSlot(); // Ensure the TimeSlot is correctly retrieved
 
-        if (timeSlot.isPresent()) {
-            // Create the SpraySession if it does not exist
-            SpraySession spraySession = new SpraySession();
-            spraySession.setTimeSlot(timeSlot.get());
-            spraySession.setIsAvailable(true);
+        if (timeSlot == null || timeSlot.getId() == null) {
+            throw new RuntimeException("TimeSlot is not set or is invalid.");
+        }
 
-            spraySession = spraySessionRepository.save(spraySession);
+        // Retrieve all SpraySessions for the given TimeSlot on the service date
+        List<SpraySession> existingSessions = spraySessionRepository.findByTimeSlotAndDate(timeSlot, serviceDate);
 
-            // Link the SpraySession to the Order
-            order.setSpraySession(spraySession);
+        // Check if there are any existing sessions on the same service date
+        if (!existingSessions.isEmpty()) {
+            for (SpraySession session : existingSessions) {
+                // Check if any session is available
+                if (session.getIsAvailable()) {
+                    // Mark session as unavailable and assign to order
+                    session.setIsAvailable(false);
+                    spraySessionRepository.save(session);
+                    order.setSpraySession(session);
+                    return saveOrderWithCostCalculation(order);
+                }
+            }
+            // If no available sessions are found, log a message
+            System.out.println("No available SpraySessions for the given time slot on " + serviceDate);
+        }
 
-            // Calculate the total cost
-            double costPerDecare = 30000;
-            double totalCost = order.getArea() * costPerDecare;
-            order.setTotalCost(totalCost);
+        // If no matching date or only one session exists, create a new SpraySession
+        if (existingSessions.size() < 2) {
+            SpraySession newSession = new SpraySession();
+            newSession.setTimeSlot(timeSlot); // Ensure the TimeSlot is set
+            newSession.setIsAvailable(false); // Mark as unavailable since it's being assigned to this order
+            newSession.setDate(serviceDate);
+            newSession = spraySessionRepository.save(newSession);
 
-            // Save and return the Order
-            return orderRepository.save(order);
+            // Assign the new session to the order
+            order.setSpraySession(newSession);
+            return saveOrderWithCostCalculation(order);
         } else {
-            throw new RuntimeException("TimeSlot not found with id: " + timeSlotId);
+            // If two sessions already exist, log a message
+            System.out.println("Maximum number of SpraySessions reached for TimeSlot on " + serviceDate);
+            throw new RuntimeException("Cannot create more than 2 sessions per time slot on a given day.");
         }
     }
+
+    // Helper method to save the order with cost calculation
+    private Order saveOrderWithCostCalculation(Order order) {
+        // Calculate the total cost based on the area
+        double costPerDecare = 30000;
+        double totalCost = order.getArea() * costPerDecare;
+        order.setTotalCost(totalCost);
+
+        // Save the Order
+        return orderRepository.save(order);
+    }
+
+
+
+
 
 
     @Override

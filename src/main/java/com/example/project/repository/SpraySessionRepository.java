@@ -21,5 +21,7 @@ public interface SpraySessionRepository extends JpaRepository<SpraySession, Long
 
     @Query("SELECT COUNT(s) FROM SpraySession s WHERE s.timeSlot.id = :timeSlotId AND s.date = :date")
     int countByTimeSlotIdAndDate(@Param("timeSlotId") Long timeSlotId, @Param("date") LocalDate date);
+    List<SpraySession> findByTimeSlotAndDate(TimeSlot timeSlot, LocalDate date);
 
+    int countByTimeSlotAndDate(TimeSlot timeSlot, LocalDate date);
 }
