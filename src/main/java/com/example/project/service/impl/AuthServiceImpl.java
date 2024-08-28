@@ -1,8 +1,10 @@
 package com.example.project.service.impl;
 
 import com.example.project.model.dto.LoginRequest;
+import com.example.project.model.dto.PersonExpertise;
 import com.example.project.model.dto.RegisterRequest;
 import com.example.project.model.entity.Person;
+import com.example.project.model.entity.PersonRole;
 import com.example.project.repository.PersonRepository;
 import com.example.project.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +45,8 @@ public class AuthServiceImpl {
         person.setEmailAddress(registerRequest.getEmailAddress());
         person.setHomeAddress(registerRequest.getHomeAddress());
         person.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));  // Encode password
-        person.setRole(Person.Role.valueOf(registerRequest.getRole()));
-        person.setExpertise(Person.Expertise.valueOf(registerRequest.getExpertise()));
+        person.setRole(PersonRole.valueOf(registerRequest.getRole()));
+        person.setExpertise(PersonExpertise.valueOf(registerRequest.getExpertise()));
 
         // Save the new user to the database
         personRepository.save(person);

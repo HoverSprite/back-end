@@ -1,7 +1,11 @@
 package com.example.project.model.entity;
 
+import com.example.project.model.dto.PersonExpertise;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -41,23 +45,25 @@ public class Person {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ROLE")
-    private Role role;
+    private PersonRole role;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "EXPERTISE")
-    private Expertise expertise;
+    private PersonExpertise expertise;
 
     @Column(name = "PROFILE_PICTURE_URL")
     private String profilePictureUrl;
 
-    // Enums for role and expertise
-    public enum Role {
-        ADMIN, FARMER, RECEPTIONIST, SPRAYER
-    }
+    @OneToMany(mappedBy = "farmer", fetch = FetchType.LAZY)
+    private List<SprayOrder> sprayOrdersAsFarmer = new ArrayList<>();
 
-    public enum Expertise {
-        APPRENTICE, ADEPT, EXPERT
-    }
+    @OneToMany(mappedBy = "receptionist", fetch = FetchType.LAZY)
+    private List<SprayOrder> sprayOrdersAsReceptionist = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sprayer", fetch = FetchType.LAZY)
+    private List<SprayerAssignment> sprayerAssignments = new ArrayList<>();
+
+    // Enums for role and expertise
 
     // Ensure a default profile picture is set if not provided
     @PrePersist
@@ -72,7 +78,7 @@ public class Person {
         this.passwordHash = Integer.toString(password.hashCode());
     }
 
-    private String getDefaultAvatarUrlForRole(Role role) {
+    private String getDefaultAvatarUrlForRole(PersonRole role) {
         // Handle invalid role
         return switch (role) {
             case ADMIN -> "admin-avatar-url";
