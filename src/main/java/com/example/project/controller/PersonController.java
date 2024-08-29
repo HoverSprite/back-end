@@ -26,8 +26,8 @@ public class PersonController {
         return personService.getPersonList();
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody Person person) {
+    @PostMapping("/signup")
+    public ResponseEntity<String> signup(@RequestBody Person person) {
         if (personService.isEmailTaken(person.getEmailAddress())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already taken");
         }
@@ -61,7 +61,7 @@ public class PersonController {
         person.setPassword(person.getPasswordHash());
         personService.addPerson(person);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("Registration successful");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Sign-up successful");
     }
 
     @PostMapping("/login")
