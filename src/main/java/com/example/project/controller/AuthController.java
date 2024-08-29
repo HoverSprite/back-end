@@ -16,8 +16,8 @@ public class AuthController {
     @Autowired
     private AuthServiceImpl authService;
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
+    @PostMapping("/signup")
+    public ResponseEntity<?> signup(@RequestBody RegisterRequest registerRequest) {
         authService.register(registerRequest);
         return ResponseEntity.ok("User registered successfully");
     }
