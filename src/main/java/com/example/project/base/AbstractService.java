@@ -6,23 +6,23 @@ import org.springframework.validation.Validator;
 
 import java.util.List;
 
-public abstract class AbstractService<T, ID> implements BaseService<T, ID> {
+public abstract class AbstractService<T, ID, ROLE> implements BaseService<T, ID, ROLE> {
 
     @Autowired
     private ValidationUtils validationUtils;
 
     @Override
-    public T save(T dto) {
-        validateForSave(validationUtils, dto);
+    public T save(ID userId, T dto, ROLE role) {
+        validateForSave(validationUtils, dto, role);
         validationUtils.throwErrorIfHasMessages();
-        return executeSave(dto);
+        return executeSave(userId, dto, role);
     }
 
     @Override
-    public T update(T dto) {
-        validateForUpdate(validationUtils, dto);
+    public T update(ID userId, ID id, T dto, ROLE role) {
+        validateForUpdate(validationUtils, dto, role);
         validationUtils.throwErrorIfHasMessages();
-        return executeUpdate(dto);
+        return executeUpdate(userId, id, dto, role);
     }
 
     @Override
@@ -34,11 +34,11 @@ public abstract class AbstractService<T, ID> implements BaseService<T, ID> {
     @Override
     public abstract void deleteById(ID id);
 
-    protected abstract void validateForSave(ValidationUtils validator, T dto);
+    protected abstract void validateForSave(ValidationUtils validator, T dto, ROLE role);
 
-    protected abstract void validateForUpdate(ValidationUtils validator, T dto);
+    protected abstract void validateForUpdate(ValidationUtils validator, T dto, ROLE role);
 
-    protected abstract T executeSave(T dto); // Concrete implementation of save
+    protected abstract T executeSave(ID userId, T dto, ROLE role); // Concrete implementation of save
 
-    protected abstract T executeUpdate(T dto); // Concrete implementation of update
+    protected abstract T executeUpdate(ID userId, ID id, T dto, ROLE role); // Concrete implementation of update
 }
