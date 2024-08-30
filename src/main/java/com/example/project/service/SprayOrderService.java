@@ -7,11 +7,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SprayOrderService {
-    SprayOrderDTO createSprayOrder(SprayOrderDTO sprayOrderDTO);
-    List<SprayOrderDTO> findAll();
 
-    SprayOrderDTO findSprayOrderById(Integer id);
-
-    SprayOrderDTO updateSprayOrder(SprayOrderDTO updatedSprayOrderDTO);
-    void deleteSprayOrder(Integer id);
 }
