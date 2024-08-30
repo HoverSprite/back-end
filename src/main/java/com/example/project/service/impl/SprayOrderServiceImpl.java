@@ -50,6 +50,10 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
 
     @Override
     protected void validateForSave(ValidationUtils validator, SprayOrderDTO sprayOrderDTO, PersonRole personRole) {
+        verifySessionAvailable(validator, sprayOrderDTO);
+    }
+
+    private void verifySessionAvailable(ValidationUtils validator, SprayOrderDTO sprayOrderDTO) {
         SpraySessionDTO spraySessionDTO = sprayOrderDTO.getSpraySession();
         List<SpraySession_2> existingSessions = spraySession2Service.findSpraySessionByDate(spraySessionDTO.getDate(), spraySessionDTO.getStartTime());
         validator.isTrue(existingSessions.size() < MAX_SPRAYS_SESSIONS_IN_ONE_HOUR, NO_MORE_THAN_2_SESSIONS_ALLOWED_AT_THE_SAME_TIME);
@@ -60,6 +64,11 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
         SpraySessionDTO spraySessionDTO = sprayOrderDTO.getSpraySession();
         SprayOrder sprayOrder = SprayOrderMapper.INSTANCE.toEntitySave(sprayOrderDTO);
         SpraySession_2 spraySession = SpraySessionMapper.INSTANCE.toEntitySave(spraySessionDTO);
+
+        if (personRole == PersonRole.RECEPTIONIST) {
+            sprayOrder.setStatus(SprayStatus.CONFIRMED);
+        }
+
         calculateCostPerArea(sprayOrder);
         spraySession.setSprayOrder(sprayOrder);
         sprayOrder.setSpraySession(spraySession);
@@ -67,8 +76,13 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
     }
 
     @Override
-    protected void validateForUpdate(ValidationUtils validator, SprayOrderDTO dto, PersonRole personRole) {
-
+    protected void validateForUpdate(ValidationUtils validator, SprayOrderDTO sprayOrderDTO, PersonRole personRole) {
+        verifySessionAvailable(validator, sprayOrderDTO);
+        validator.isTrue(
+                ((sprayOrderDTO.getStatus() == SprayStatus.CANCELLED ||
+                sprayOrderDTO.getStatus() == SprayStatus.CONFIRMED) && personRole == PersonRole.RECEPTIONIST), "The selected user is not allowed to cancel or confirm the order.");
+        validator.isTrue(
+                (sprayOrderDTO.getStatus() == SprayStatus.IN_PROGRESS && personRole == PersonRole.SPRAYER), "The selected user is not allowed to set in progress for the order.");
     }
 
     @Override
