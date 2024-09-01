@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -62,8 +63,10 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
 
     private void verifySessionAvailable(ValidationUtils validator, SprayOrderDTO sprayOrderDTO) {
         SpraySessionDTO spraySessionDTO = sprayOrderDTO.getSpraySession();
-        List<SpraySession_2> existingSessions = spraySession2Service.findSpraySessionByDate(spraySessionDTO.getDate(), spraySessionDTO.getStartTime());
-        validator.isTrue(existingSessions.size() < MAX_SPRAYS_SESSIONS_IN_ONE_HOUR, NO_MORE_THAN_2_SESSIONS_ALLOWED_AT_THE_SAME_TIME);
+        if (spraySessionDTO.getId() == null) {
+            List<SpraySession_2> existingSessions = spraySession2Service.findSpraySessionByDate(spraySessionDTO.getDate(), spraySessionDTO.getStartTime());
+            validator.isTrue(existingSessions.size() < MAX_SPRAYS_SESSIONS_IN_ONE_HOUR, NO_MORE_THAN_2_SESSIONS_ALLOWED_AT_THE_SAME_TIME);
+        }
     }
 
     @Override
@@ -85,13 +88,19 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
     @Override
     protected void validateForUpdate(ValidationUtils validator, SprayOrderDTO sprayOrderDTO, PersonRole personRole) {
         verifySessionAvailable(validator, sprayOrderDTO);
-        validator.isTrue(
-                ((sprayOrderDTO.getStatus() == SprayStatus.CANCELLED ||
-                sprayOrderDTO.getStatus() == SprayStatus.CONFIRMED) && personRole == PersonRole.RECEPTIONIST), "The selected user is not allowed to cancel or confirm the order.");
-        validator.isTrue(
-                (sprayOrderDTO.getStatus() == SprayStatus.IN_PROGRESS && personRole == PersonRole.SPRAYER), "The selected user is not allowed to set in progress for the order.");
-        validator.isTrue(
-                (sprayOrderDTO.getStatus() == SprayStatus.SPRAY_COMPLETED && personRole == PersonRole.SPRAYER), "The selected user is not allowed to set spray completed for the order.");
+        switch (personRole) {
+            case RECEPTIONIST:
+                validator.isTrue(
+                        ((sprayOrderDTO.getStatus() == SprayStatus.CANCELLED ||
+                                sprayOrderDTO.getStatus() == SprayStatus.CONFIRMED)), "The selected user is not allowed to cancel or confirm the order.");
+                break;
+            case SPRAYER:
+                validator.isTrue(
+                        (sprayOrderDTO.getStatus() == SprayStatus.IN_PROGRESS), "The selected user is not allowed to set in progress for the order.");
+                validator.isTrue(
+                        (sprayOrderDTO.getStatus() == SprayStatus.SPRAY_COMPLETED), "The selected user is not allowed to set spray completed for the order.");
+                break;
+        }
     }
 
     @Override
@@ -103,7 +112,7 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
         SprayStatus oldStatus = existingSprayOrder.getStatus();
 
         if ((personRole == PersonRole.FARMER || personRole == PersonRole.RECEPTIONIST) &&
-                (oldStatus == SprayStatus.PENDING || oldStatus == null)) {
+                (oldStatus == SprayStatus.PENDING || oldStatus == null) && (newStatus == SprayStatus.PENDING)) {
             existingSprayOrder.setCropType(sprayOrderDTO.getCropType());
             existingSprayOrder.setArea(sprayOrderDTO.getArea());
             existingSprayOrder.setDateTime(sprayOrderDTO.getDateTime());
@@ -118,8 +127,14 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
 
         switch (personRole) {
             case RECEPTIONIST:
-                if ((newStatus == SprayStatus.CANCELLED || newStatus == SprayStatus.CONFIRMED) && oldStatus == SprayStatus.PENDING) {
-                    existingSprayOrder.setStatus(newStatus);
+                if (oldStatus == SprayStatus.PENDING) {
+                    if (newStatus == SprayStatus.CANCELLED) {
+                        existingSprayOrder.setStatus(newStatus);
+                        existingSprayOrder.setSpraySession(null);
+                    }
+                    if (newStatus == SprayStatus.CONFIRMED) {
+                        existingSprayOrder.setStatus(newStatus);
+                    }
                 }
                 if (oldStatus == SprayStatus.CONFIRMED) {
                     if (sprayOrderDTO.getSprayerAssignments().isEmpty()) {
@@ -141,7 +156,17 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
                     if (hasApprentice) {
                         throw new RuntimeException("Cannot assign an Apprentice SPRAYER. Please select an Adept or Expert SPRAYER.");
                     }
-
+                    existingSprayOrder.getSprayerAssignments().clear();
+                    List<SprayerAssignment> sprayerAssignments = sprayers.stream().map(sprayer -> {
+                        SprayerAssignment assignment = SprayerAssignment.builder()
+                                .sprayer(sprayer)
+                                .isPrimary(true)
+                                .sprayOrder(existingSprayOrder)
+                                .build();
+                        sprayer.getSprayerAssignments().add(assignment);
+                        return assignment;
+                    }).collect(Collectors.toList());
+                    existingSprayOrder.getSprayerAssignments().addAll(sprayerAssignments);
                     existingSprayOrder.setStatus(SprayStatus.ASSIGNED);
                 }
                 break;

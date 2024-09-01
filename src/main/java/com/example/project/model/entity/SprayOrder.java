@@ -54,10 +54,10 @@ public class SprayOrder {
     @Column(name = "LOCATION", nullable = false)
     private String location;
 
-    @OneToMany(mappedBy = "sprayOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sprayOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SprayerAssignment> sprayerAssignments = new ArrayList<>();
 
 
-    @OneToOne(mappedBy = "sprayOrder", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @OneToOne(mappedBy = "sprayOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private SpraySession_2 spraySession;
 }
