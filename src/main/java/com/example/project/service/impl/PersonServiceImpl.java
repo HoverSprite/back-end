@@ -58,5 +58,10 @@ public class PersonServiceImpl implements PersonService {
         return true;
     }
 
+    @Override
+    public List<Person> getUserByIds(List<Integer> ids) {
+        return personRepository.getUsersById(ids);
+    }
+
 
 }

@@ -13,5 +13,7 @@ public interface SpraySessionMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "sprayOrder", ignore = true)
     SpraySession_2 toEntitySave(SpraySessionDTO dto);
+
+    SpraySession_2 toEntityUpdate(SpraySessionDTO dto);
     SpraySessionDTO toDto(SpraySession_2 entity);
 }

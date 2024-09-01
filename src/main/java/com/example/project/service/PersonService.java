@@ -18,4 +18,6 @@ public interface PersonService {
 
     boolean isValidPhoneNumber(String phoneNumber);
     boolean isValidEmailAddress(String emailAddress);
+
+    List<Person> getUserByIds(List<Integer> ids);
 }

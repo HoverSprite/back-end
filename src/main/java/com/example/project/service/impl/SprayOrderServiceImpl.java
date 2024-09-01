@@ -3,10 +3,13 @@ package com.example.project.service.impl;
 import com.example.project.base.AbstractService;
 import com.example.project.mapper.SprayOrderMapper;
 import com.example.project.mapper.SpraySessionMapper;
+import com.example.project.model.dto.PersonExpertise;
 import com.example.project.model.dto.SprayOrderDTO;
 import com.example.project.model.dto.SpraySessionDTO;
+import com.example.project.model.dto.SprayerAssignmentDTO;
 import com.example.project.model.entity.*;
 import com.example.project.repository.SprayOrderRepository;
+import com.example.project.service.PersonService;
 import com.example.project.service.SprayOrderService;
 import com.example.project.service.SpraySession2Service;
 import com.example.project.validator.ValidationUtils;
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,6 +31,9 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
 
     @Autowired
     private SprayOrderRepository sprayOrderRepository;
+
+    @Autowired
+    private PersonService personService;
 
     @Autowired
     private SpraySession2Service spraySession2Service;
@@ -90,17 +97,87 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
         SprayOrder existingSprayOrder = sprayOrderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + sprayOrderDTO.getId()));
 
-        existingSprayOrder.setCropType(sprayOrderDTO.getCropType());
-        existingSprayOrder.setArea(sprayOrderDTO.getArea());
-        existingSprayOrder.setDateTime(sprayOrderDTO.getDateTime());
-        existingSprayOrder.setLocation(sprayOrderDTO.getLocation());
-        existingSprayOrder.setStatus(SprayStatus.PENDING);
+        SprayStatus newStatus = sprayOrderDTO.getStatus();
+        SprayStatus oldStatus = existingSprayOrder.getStatus();
 
-        SpraySession_2 updatedSpraySession = SpraySessionMapper.INSTANCE.toEntitySave(sprayOrderDTO.getSpraySession());
-        if (updatedSpraySession != null && !existingSprayOrder.getSpraySession().equals(updatedSpraySession)) {
-            existingSprayOrder.setSpraySession(updatedSpraySession);
-            updatedSpraySession.setSprayOrder(existingSprayOrder);
+        if ((personRole == PersonRole.FARMER || personRole == PersonRole.RECEPTIONIST) &&
+                (oldStatus == SprayStatus.PENDING || oldStatus == null)) {
+            existingSprayOrder.setCropType(sprayOrderDTO.getCropType());
+            existingSprayOrder.setArea(sprayOrderDTO.getArea());
+            existingSprayOrder.setDateTime(sprayOrderDTO.getDateTime());
+            existingSprayOrder.setLocation(sprayOrderDTO.getLocation());
+
+            SpraySession_2 updatedSpraySession = SpraySessionMapper.INSTANCE.toEntityUpdate(sprayOrderDTO.getSpraySession());
+            if (updatedSpraySession != null && !existingSprayOrder.getSpraySession().equals(updatedSpraySession)) {
+                existingSprayOrder.setSpraySession(updatedSpraySession);
+                updatedSpraySession.setSprayOrder(existingSprayOrder);
+            }
         }
+
+        switch (personRole) {
+            case RECEPTIONIST:
+                if ((newStatus == SprayStatus.CANCELLED || newStatus == SprayStatus.CONFIRMED) && oldStatus == SprayStatus.PENDING) {
+                    existingSprayOrder.setStatus(newStatus);
+                }
+                if (oldStatus == SprayStatus.CONFIRMED) {
+                    if (sprayOrderDTO.getSprayerAssignments().isEmpty()) {
+                        throw new RuntimeException("No SPRAYERs assigned. Cannot set the status to ASSIGNED.");
+                    }
+
+                    List<Integer> sprayerIds = sprayOrderDTO.getSprayerAssignments()
+                            .stream().map(sprayerAssignmentDTO -> sprayerAssignmentDTO.getSprayer().getId())
+                            .toList();
+
+                    List<Person> sprayers = personService.getUserByIds(sprayerIds);
+                    if (sprayers.isEmpty()) {
+                        throw new RuntimeException("SPRAYERs not found. Cannot set the status to ASSIGNED.");
+                    }
+
+                    boolean hasApprentice = sprayers.stream()
+                            .anyMatch(sprayer -> sprayer.getExpertise() == PersonExpertise.APPRENTICE);
+
+                    if (hasApprentice) {
+                        throw new RuntimeException("Cannot assign an Apprentice SPRAYER. Please select an Adept or Expert SPRAYER.");
+                    }
+
+                    existingSprayOrder.setStatus(SprayStatus.ASSIGNED);
+                }
+                break;
+
+            case SPRAYER:
+                if (newStatus == SprayStatus.IN_PROGRESS && oldStatus == SprayStatus.ASSIGNED) {
+                    existingSprayOrder.setStatus(SprayStatus.IN_PROGRESS);
+                }
+                if (newStatus == SprayStatus.SPRAY_COMPLETED && oldStatus == SprayStatus.IN_PROGRESS) {
+                    existingSprayOrder.setStatus(SprayStatus.SPRAY_COMPLETED);
+                }
+                break;
+
+            default:
+                throw new RuntimeException("Unsupported role: " + personRole);
+        }
+
+
+
+        if (oldStatus == SprayStatus.SPRAY_COMPLETED && personRole == PersonRole.SPRAYER) {
+            BigDecimal paymentReceivedAmount = sprayOrderDTO.getPaymentReceivedAmount();
+            if (paymentReceivedAmount == null || paymentReceivedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("Invalid payment amount. Payment must be greater than zero.");
+            }
+
+            BigDecimal totalCost = BigDecimal.valueOf(existingSprayOrder.getCost());
+            if (paymentReceivedAmount.compareTo(totalCost) < 0) {
+                throw new RuntimeException("Payment received is less than the total cost. Cannot complete the order.");
+            }
+
+            BigDecimal changeAmount = paymentReceivedAmount.subtract(totalCost);
+            existingSprayOrder.setPaymentReceivedAmount(paymentReceivedAmount);
+            existingSprayOrder.setChangeAmount(changeAmount);
+
+            // Set the order status to COMPLETE
+            existingSprayOrder.setStatus(SprayStatus.COMPLETED);
+        }
+
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
     }
 
