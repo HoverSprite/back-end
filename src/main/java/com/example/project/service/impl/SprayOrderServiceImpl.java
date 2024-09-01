@@ -90,6 +90,8 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
                 sprayOrderDTO.getStatus() == SprayStatus.CONFIRMED) && personRole == PersonRole.RECEPTIONIST), "The selected user is not allowed to cancel or confirm the order.");
         validator.isTrue(
                 (sprayOrderDTO.getStatus() == SprayStatus.IN_PROGRESS && personRole == PersonRole.SPRAYER), "The selected user is not allowed to set in progress for the order.");
+        validator.isTrue(
+                (sprayOrderDTO.getStatus() == SprayStatus.SPRAY_COMPLETED && personRole == PersonRole.SPRAYER), "The selected user is not allowed to set spray completed for the order.");
     }
 
     @Override
