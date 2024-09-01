@@ -6,8 +6,8 @@ import com.example.project.service.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+//import org.springframework.security.core.Authentication;
+//import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 @RestController
 @CrossOrigin
+@RequestMapping // Ensure correct base path if needed
 public class PersonController {
 
     @Autowired
@@ -26,108 +27,70 @@ public class PersonController {
         return personService.getPersonList();
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody Person person) {
-        if (personService.isEmailTaken(person.getEmailAddress())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already taken");
-        }
-        if (personService.isPhoneNumberTaken(person.getPhoneNumber())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Phone number already taken");
-        }
-        if (!isValidPhoneNumber(person.getPhoneNumber())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid phone number format");
-        }
-
-        // Email domain validation for RECEPTIONISTS and SPRAYERS
-        if (("Receptionist".equalsIgnoreCase(String.valueOf(person.getRole())) || "Sprayer".equalsIgnoreCase(String.valueOf(person.getRole())))
-                && !person.getEmailAddress().endsWith("@hoversprite.com")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be under hoversprite.com domain for RECEPTIONISTS and SPRAYERS");
-        }
-
-        // Expertise validation for RECEPTIONISTS and SPRAYERS
-        if (("Receptionist".equalsIgnoreCase(String.valueOf(person.getRole())) || "Sprayer".equalsIgnoreCase(String.valueOf(person.getRole())))
-                && (!"Apprentice".equalsIgnoreCase(String.valueOf(person.getExpertise())) &&
-                !"Adept".equalsIgnoreCase(String.valueOf(person.getExpertise())) &&
-                !"Expert".equalsIgnoreCase(String.valueOf(person.getExpertise())))) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Expertise must be Apprentice, Adept, or Expert");
-        }
-
-        // Password validation: Must contain at least one capital letter and one special character
-        if (!isValidPassword(person.getPasswordHash())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must contain at least one capital letter and one special character");
-        }
-
-        // Hash password before saving to database
-        person.setPassword(person.getPasswordHash());
-        personService.addPerson(person);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body("Sign-up successful");
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String emailOrPhone, @RequestParam String password) {
-        if (personService.authenticate(emailOrPhone, password)) {
-            return ResponseEntity.ok("Login successful");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
-    }
-
-    private boolean isValidPassword(String password) {
-        Pattern pattern = Pattern.compile("^(?=.*[A-Z])(?=.*[@#$%^&+=]).*$");
-        Matcher matcher = pattern.matcher(password);
-        return matcher.find();
-    }
-
-    private boolean isValidPhoneNumber(String phoneNumber) {
-        // Example pattern: starts with a digit, 10-15 digits long
-        Pattern pattern = Pattern.compile("^\\d{10,15}$");
-        Matcher matcher = pattern.matcher(phoneNumber);
-        return matcher.matches();
-    }
-
-
+//    @PostMapping("/signup")
+//    public ResponseEntity<String> signup(@RequestBody Person person) {
+//        if (personService.isEmailTaken(person.getEmailAddress())) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already taken");
+//        }
+//        if (personService.isPhoneNumberTaken(person.getPhoneNumber())) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT).body("Phone number already taken");
+//        }
+//        if (!isValidPhoneNumber(person.getPhoneNumber())) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid phone number format");
+//        }
+//
+//        // Email domain validation for RECEPTIONISTS and SPRAYERS
+//        if (("Receptionist".equalsIgnoreCase(String.valueOf(person.getRole())) || "Sprayer".equalsIgnoreCase(String.valueOf(person.getRole())))
+//                && !person.getEmailAddress().endsWith("@hoversprite.com")) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be under hoversprite.com domain for RECEPTIONISTS and SPRAYERS");
+//        }
+//
+//        // Expertise validation for RECEPTIONISTS and SPRAYERS
+//        if (("Receptionist".equalsIgnoreCase(String.valueOf(person.getRole())) || "Sprayer".equalsIgnoreCase(String.valueOf(person.getRole())))
+//                && (!"Apprentice".equalsIgnoreCase(String.valueOf(person.getExpertise())) &&
+//                !"Adept".equalsIgnoreCase(String.valueOf(person.getExpertise())) &&
+//                !"Expert".equalsIgnoreCase(String.valueOf(person.getExpertise())))) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Expertise must be Apprentice, Adept, or Expert");
+//        }
+//
+//        // Password validation: Must contain at least one capital letter and one special character
+//        if (!isValidPassword(person.getPasswordHash())) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must contain at least one capital letter and one special character");
+//        }
+//
+//        // Hash password before saving to database
+//        person.setPassword(person.getPasswordHash());
+//        personService.addPerson(person);
+//
+//        return ResponseEntity.status(HttpStatus.CREATED).body("Sign-up successful");
+//    }
+//
+//    @PostMapping("/login")
+//    public ResponseEntity<String> login(@RequestParam String emailOrPhone, @RequestParam String password) {
+//        if (personService.authenticate(emailOrPhone, password)) {
+//            return ResponseEntity.ok("Login successful");
+//        } else {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+//        }
+//    }
+//
+//    private boolean isValidPassword(String password) {
+//        Pattern pattern = Pattern.compile("^(?=.*[A-Z])(?=.*[@#$%^&+=]).*$");
+//        Matcher matcher = pattern.matcher(password);
+//        return matcher.find();
+//    }
+//
+//    private boolean isValidPhoneNumber(String phoneNumber) {
+//        // Example pattern: starts with a digit, 10-15 digits long
+//        Pattern pattern = Pattern.compile("^\\d{10,15}$");
+//        Matcher matcher = pattern.matcher(phoneNumber);
+//        return matcher.matches();
+//    }
+//
+//
     @PostMapping("/addPerson")
     public ResponseEntity<String> addPerson(@RequestBody Person person) {
-        // Check if the current user is an admin
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins can add new persons");
-        }
-
-        if (personService.isEmailTaken(person.getEmailAddress())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already taken");
-        }
-        if (personService.isPhoneNumberTaken(person.getPhoneNumber())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Phone number already taken");
-        }
-        if (!isValidPhoneNumber(person.getPhoneNumber())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid phone number format");
-        }
-
-        // Email domain validation for RECEPTIONISTS and SPRAYERS
-        if (("Receptionist".equalsIgnoreCase(String.valueOf(person.getRole())) || "Sprayer".equalsIgnoreCase(String.valueOf(person.getRole())))
-                && !person.getEmailAddress().endsWith("@hoversprite.com")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be under hoversprite.com domain for RECEPTIONISTS and SPRAYERS");
-        }
-
-        // Expertise validation for RECEPTIONISTS and SPRAYERS
-        if (("Receptionist".equalsIgnoreCase(String.valueOf(person.getRole())) || "Sprayer".equalsIgnoreCase(String.valueOf(person.getRole())))
-                && (!"Apprentice".equalsIgnoreCase(String.valueOf(person.getExpertise())) &&
-                !"Adept".equalsIgnoreCase(String.valueOf(person.getExpertise())) &&
-                !"Expert".equalsIgnoreCase(String.valueOf(person.getExpertise())))) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Expertise must be Apprentice, Adept, or Expert");
-        }
-
-        // Password validation: Must contain at least one capital letter and one special character
-        if (!isValidPassword(person.getPasswordHash())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must contain at least one capital letter and one special character");
-        }
-
-        // Hash password before saving to database
-        person.setPassword(person.getPasswordHash());
         personService.addPerson(person);
-
         return ResponseEntity.status(HttpStatus.CREATED).body("Person added successfully");
     }
 

@@ -1,5 +1,6 @@
 package com.example.project.repository.custom.impl;
 
+import com.example.project.model.entity.Person;
 import com.example.project.model.entity.SprayOrder;
 import com.example.project.model.entity.SpraySession_2;
 import com.example.project.model.entity.SprayerAssignment;
@@ -24,10 +25,21 @@ public class SprayOrderRepositoryCustomImpl implements SprayOrderRepositoryCusto
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<SprayOrder> cq = cb.createQuery(SprayOrder.class);
         Root<SprayOrder> sprayOrderRoot = cq.from(SprayOrder.class);
+
+        // Perform a fetch join to eagerly load 'farmer' and 'spraySession'
+        sprayOrderRoot.fetch("farmer", JoinType.LEFT);
+        sprayOrderRoot.fetch("spraySession", JoinType.LEFT);
+
+        // Create predicate to filter by farmer ID
         Predicate farmerPredicate = cb.equal(sprayOrderRoot.get("farmer").get("id"), id);
         cq.where(farmerPredicate);
-        return em.createQuery(cq).getResultList();
+        cq.distinct(true);
+
+        TypedQuery<SprayOrder> query = em.createQuery(cq);
+        return query.getResultList();
     }
+
+
 
     @Override
     public List<SprayOrder> getOrdersBySprayer(Integer id) {

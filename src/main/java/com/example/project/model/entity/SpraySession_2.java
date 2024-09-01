@@ -1,5 +1,6 @@
 package com.example.project.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,5 +35,6 @@ public class SpraySession_2 {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "SPRAY_ORDER_ID", nullable = false)
+    @JsonBackReference
     private SprayOrder sprayOrder;
 }

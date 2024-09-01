@@ -19,7 +19,4 @@ public class PersonDTO {
     private PersonRole role;
     private PersonExpertise expertise;
     private String profilePictureUrl;
-    private List<SprayOrderDTO> sprayOrdersAsFarmer;
-    private List<SprayOrderDTO> sprayOrdersAsReceptionist;
-    private List<SprayerAssignmentDTO> sprayerAssignments;
 }

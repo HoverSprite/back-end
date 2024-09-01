@@ -8,7 +8,6 @@ import lombok.*;
 @NoArgsConstructor
 public class SprayerAssignmentDTO {
     private Integer id;
-    private SprayOrderDTO sprayOrder;
     private PersonDTO sprayer;
     private Boolean isPrimary;
 }
