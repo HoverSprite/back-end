@@ -91,14 +91,12 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
         switch (personRole) {
             case RECEPTIONIST:
                 validator.isTrue(
-                        ((sprayOrderDTO.getStatus() == SprayStatus.CANCELLED ||
-                                sprayOrderDTO.getStatus() == SprayStatus.CONFIRMED)), "The selected user is not allowed to cancel or confirm the order.");
+                        (sprayOrderDTO.getStatus() == SprayStatus.CANCELLED || sprayOrderDTO.getStatus() == SprayStatus.PENDING ||
+                                sprayOrderDTO.getStatus() == SprayStatus.CONFIRMED), "The receptionist user is only allowed to create, cancel or confirm the order.");
                 break;
             case SPRAYER:
                 validator.isTrue(
-                        (sprayOrderDTO.getStatus() == SprayStatus.IN_PROGRESS), "The selected user is not allowed to set in progress for the order.");
-                validator.isTrue(
-                        (sprayOrderDTO.getStatus() == SprayStatus.SPRAY_COMPLETED), "The selected user is not allowed to set spray completed for the order.");
+                        (sprayOrderDTO.getStatus() == SprayStatus.IN_PROGRESS || sprayOrderDTO.getStatus() == SprayStatus.SPRAY_COMPLETED), "The selected user is only allowed to set in progress or set completed for the order.");
                 break;
         }
     }
@@ -200,10 +198,8 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
             BigDecimal changeAmount = paymentReceivedAmount.subtract(totalCost);
             existingSprayOrder.setPaymentReceivedAmount(paymentReceivedAmount);
             existingSprayOrder.setChangeAmount(changeAmount);
-
             existingSprayOrder.setStatus(SprayStatus.COMPLETED);
         }
-
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
     }
 
