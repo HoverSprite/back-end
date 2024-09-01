@@ -90,13 +90,17 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
         verifySessionAvailable(validator, sprayOrderDTO);
         switch (personRole) {
             case RECEPTIONIST:
-                validator.isTrue(
-                        (sprayOrderDTO.getStatus() == SprayStatus.CANCELLED || sprayOrderDTO.getStatus() == SprayStatus.PENDING ||
-                                sprayOrderDTO.getStatus() == SprayStatus.CONFIRMED), "The receptionist user is only allowed to create, cancel or confirm the order.");
+                if (sprayOrderDTO.getStatus() != null) {
+                    validator.isTrue(
+                            (sprayOrderDTO.getStatus() == SprayStatus.CANCELLED || sprayOrderDTO.getStatus() == SprayStatus.PENDING ||
+                                    sprayOrderDTO.getStatus() == SprayStatus.CONFIRMED), "The receptionist user is only allowed to create, cancel or confirm the order.");
+                }
                 break;
             case SPRAYER:
-                validator.isTrue(
-                        (sprayOrderDTO.getStatus() == SprayStatus.IN_PROGRESS || sprayOrderDTO.getStatus() == SprayStatus.SPRAY_COMPLETED), "The selected user is only allowed to set in progress or set completed for the order.");
+                if (sprayOrderDTO.getStatus() != null) {
+                    validator.isTrue(
+                            (sprayOrderDTO.getStatus() == SprayStatus.IN_PROGRESS || sprayOrderDTO.getStatus() == SprayStatus.SPRAY_COMPLETED), "The selected user is only allowed to set in progress or set completed for the order.");
+                }
                 break;
         }
     }
