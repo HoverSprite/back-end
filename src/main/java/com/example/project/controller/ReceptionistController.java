@@ -26,7 +26,7 @@ public class ReceptionistController {
         return sprayOrderService.save(userId.intValue(), sprayOrderDTO, PersonRole.RECEPTIONIST);
     }
 
-    @PatchMapping("/orders/{order_id}/assign")
+    @PatchMapping("/orders/{orderId}/assign")
     public SprayOrderDTO assignSprayer(@PathVariable Long userId, @PathVariable Long orderId, @RequestBody SprayerAssignment sprayerAssignment) {
         return sprayerAssignmentService.assignSprayers(orderId.intValue(), sprayerAssignment);
     }
