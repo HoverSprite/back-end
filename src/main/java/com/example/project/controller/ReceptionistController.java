@@ -31,11 +31,6 @@ public class ReceptionistController {
         return sprayerAssignmentService.assignSprayers(orderId.intValue(), sprayerAssignment);
     }
 
-    @PatchMapping("/orders/{order_id}/status")
-    public SprayOrderDTO updateOrderStatus(@PathVariable Long userId, @PathVariable Long orderId, @RequestBody SprayStatus sprayStatus) {
-        return sprayOrderService.updateOrderStatus(orderId.intValue(), sprayStatus);
-    }
-
     @PutMapping("/orders/{orderId}")
     public SprayOrderDTO updateOrder(@PathVariable Long userId, @PathVariable Long orderId, @RequestBody SprayOrderDTO sprayOrderDTO) {
         return sprayOrderService.update(userId.intValue(), orderId.intValue(), sprayOrderDTO, PersonRole.RECEPTIONIST);

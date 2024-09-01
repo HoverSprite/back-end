@@ -14,11 +14,6 @@ public class SprayerController {
     @Autowired
     private SprayOrderService sprayOrderService;
 
-    @PatchMapping("/orders/{order_id}/status")
-    public SprayOrderDTO updateOrderStatus(@PathVariable Long userId, @PathVariable Long orderId, @RequestBody SprayStatus sprayStatus) {
-        return sprayOrderService.updateOrderStatus(orderId.intValue(), sprayStatus);
-    }
-
     @GetMapping("/orders")
     public List<SprayOrderDTO> viewAssignedOrders(@PathVariable Long userId) {
         return sprayOrderService.getOrdersBySprayer(userId.intValue());

@@ -176,7 +176,6 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
             existingSprayOrder.setPaymentReceivedAmount(paymentReceivedAmount);
             existingSprayOrder.setChangeAmount(changeAmount);
 
-            // Set the order status to COMPLETE
             existingSprayOrder.setStatus(SprayStatus.COMPLETED);
         }
 
@@ -195,91 +194,5 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
     @Override
     public List<SprayOrderDTO> getOrdersBySprayer(Integer sprayerId) {
         return sprayOrderRepository.getOrdersBySprayer(sprayerId).stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
-    }
-
-    @Override
-    public SprayOrderDTO updateOrderStatus(Integer orderId, SprayStatus newStatus) {
-        SprayOrder sprayOrder = sprayOrderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-
-        SprayStatus oldStatus = sprayOrder.getStatus();
-        sprayOrder.setStatus(newStatus);
-
-        switch (newStatus) {
-            case CANCELLED:
-                handleOrderCancelled(sprayOrder);
-                break;
-
-            case CONFIRMED:
-                handleOrderConfirmed(sprayOrder);
-                break;
-
-            case ASSIGNED:
-                handleOrderAssigned(sprayOrder);
-                break;
-
-            case IN_PROGRESS:
-                handleOrderInProgress(sprayOrder);
-                break;
-
-            case COMPLETED:
-                handleOrderCompleted(sprayOrder);
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown status: " + newStatus);
-        }
-        SprayOrder updatedOrder = sprayOrderRepository.save(sprayOrder);
-
-        return SprayOrderMapper.INSTANCE.toDto(updatedOrder);
-    }
-
-    private void handleOrderCancelled(SprayOrder sprayOrder) {
-        sendEmailToFarmer(sprayOrder, "Order Cancelled", "Your order has been cancelled.");
-    }
-
-    private void handleOrderConfirmed(SprayOrder sprayOrder) {
-        sendEmailToFarmer(sprayOrder, "Order Confirmed", "Your order has been confirmed and is being processed.");
-    }
-
-    private void handleOrderAssigned(SprayOrder sprayOrder) {
-        List<SprayerAssignment> assignments = sprayOrder.getSprayerAssignments();
-        String sprayerNames = assignments.stream()
-                .map(a -> a.getSprayer().getFirstName())
-                .collect(Collectors.joining(", "));
-        sendEmailToFarmer(sprayOrder, "Order Assigned", "Your order has been assigned to the following sprayer(s): " + sprayerNames);
-
-        for (SprayerAssignment assignment : assignments) {
-            Person sprayer = assignment.getSprayer();
-            sendEmailToSprayer(sprayer, sprayOrder);
-        }
-    }
-
-    private void handleOrderInProgress(SprayOrder sprayOrder) {
-        // No additional actions are specified for this status update
-    }
-
-    private void handleOrderCompleted(SprayOrder sprayOrder) {
-        sendEmailToFarmer(sprayOrder, "Order Completed", "Your order has been completed. The total cost is " + sprayOrder.getCost() + ".");
-    }
-
-    private void sendEmailToFarmer(SprayOrder sprayOrder, String subject, String body) {
-        // Implement email sending logic to the FARMER
-        Person farmer = sprayOrder.getFarmer();
-        String email = farmer.getEmailAddress(); // Assuming you have a getEmail() method
-        // Send email logic
-    }
-
-    private void sendEmailToSprayer(Person sprayer, SprayOrder sprayOrder) {
-        // Implement email sending logic to the SPRAYER
-        String email = sprayer.getEmailAddress(); // Assuming you have a getEmail() method
-        String subject = "New Spray Order Assigned";
-        String body = String.format(
-                "You have been assigned to a new spray order. Details: \nLocation: %s\nPhone: %s\nFarmer: %s",
-                sprayOrder.getLocation(),
-                sprayOrder.getFarmer().getPhoneNumber(),
-                sprayOrder.getFarmer().getFirstName()
-        );
-        // Send email logic
     }
 }

@@ -13,6 +13,4 @@ public interface SprayOrderService  extends BaseService<SprayOrderDTO, Integer, 
     List<SprayOrderDTO> getOrdersByUser(Integer userId);
 
     List<SprayOrderDTO> getOrdersBySprayer(Integer sprayerId);
-
-    SprayOrderDTO updateOrderStatus(Integer orderId, SprayStatus sprayStatus);
 }
