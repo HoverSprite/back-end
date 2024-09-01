@@ -1,12 +1,8 @@
 package com.example.project.model.entity;
 
 import com.example.project.model.dto.PersonExpertise;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,15 +53,12 @@ public class Person {
     @Column(name = "PROFILE_PICTURE_URL")
     private String profilePictureUrl;
 
-    @JsonManagedReference
     @OneToMany(mappedBy = "farmer", fetch = FetchType.LAZY)
     private List<SprayOrder> sprayOrdersAsFarmer = new ArrayList<>();
 
-    @JsonManagedReference
     @OneToMany(mappedBy = "receptionist", fetch = FetchType.LAZY)
     private List<SprayOrder> sprayOrdersAsReceptionist = new ArrayList<>();
 
-    @JsonManagedReference
     @OneToMany(mappedBy = "sprayer", fetch = FetchType.LAZY)
     private List<SprayerAssignment> sprayerAssignments = new ArrayList<>();
 

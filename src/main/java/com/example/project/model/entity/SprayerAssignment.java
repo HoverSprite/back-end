@@ -1,6 +1,5 @@
 package com.example.project.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,12 +19,10 @@ public class SprayerAssignment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "SPRAY_ORDER_ID", nullable = false)
-    @JsonBackReference
     private SprayOrder sprayOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "SPRAYER_ID", nullable = false)
-    @JsonBackReference
     private Person sprayer;
 
     @Column(name = "IS_PRIMARY", nullable = false)

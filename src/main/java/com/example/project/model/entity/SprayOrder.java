@@ -1,7 +1,5 @@
 package com.example.project.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,12 +24,10 @@ public class SprayOrder {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "FARMER_ID")
-    @JsonManagedReference
     private Person farmer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "RECEPTIONIST_ID")
-    @JsonManagedReference
     private Person receptionist;
 
     @Column(name = "CROP_TYPE", nullable = false)
@@ -59,11 +55,9 @@ public class SprayOrder {
     private String location;
 
     @OneToMany(mappedBy = "sprayOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonManagedReference
     private List<SprayerAssignment> sprayerAssignments = new ArrayList<>();
 
 
     @OneToOne(mappedBy = "sprayOrder", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, orphanRemoval = true)
-    @JsonManagedReference
     private SpraySession_2 spraySession;
 }
