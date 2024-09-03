@@ -39,6 +39,10 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
     @Autowired
     private SpraySession2Service spraySession2Service;
 
+    @Autowired
+    private NotificationService notificationService;
+
+
     @Override
     public SprayOrderDTO findById(Integer id) {
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.findById(id).orElse(null));
@@ -82,8 +86,16 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
         calculateCostPerArea(sprayOrder);
         spraySession.setSprayOrder(sprayOrder);
         sprayOrder.setSpraySession(spraySession);
-        return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(sprayOrder));
+
+        // Save the order
+        SprayOrderDTO savedOrderDTO = SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(sprayOrder));
+
+        // Notify the farmer about the new order
+        notificationService.notifyFarmer(userid.longValue(), "Your order has been created successfully!");
+
+        return savedOrderDTO;
     }
+
 
     @Override
     protected void validateForUpdate(ValidationUtils validator, SprayOrderDTO sprayOrderDTO, PersonRole personRole) {
@@ -113,12 +125,20 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
         SprayStatus newStatus = sprayOrderDTO.getStatus();
         SprayStatus oldStatus = existingSprayOrder.getStatus();
 
+        // Notification messages
+        String farmerNotificationMessage = "";
+        String sprayerNotificationMessage = "";
+
         if ((personRole == PersonRole.FARMER || personRole == PersonRole.RECEPTIONIST) &&
                 (oldStatus == SprayStatus.PENDING || oldStatus == null) && (newStatus == SprayStatus.PENDING)) {
             existingSprayOrder.setCropType(sprayOrderDTO.getCropType());
             existingSprayOrder.setArea(sprayOrderDTO.getArea());
             existingSprayOrder.setDateTime(sprayOrderDTO.getDateTime());
             existingSprayOrder.setLocation(sprayOrderDTO.getLocation());
+
+            for (SprayerAssignment assignment : existingSprayOrder.getSprayerAssignments()) {
+                notificationService.notifySprayer(assignment.getSprayer().getId(), "You have been assigned to a new spray order.");
+            }
 
             SpraySession_2 updatedSpraySession = SpraySessionMapper.INSTANCE.toEntityUpdate(sprayOrderDTO.getSpraySession());
             if (updatedSpraySession != null && !existingSprayOrder.getSpraySession().equals(updatedSpraySession)) {
@@ -133,9 +153,11 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
                     if (newStatus == SprayStatus.CANCELLED) {
                         existingSprayOrder.setStatus(newStatus);
                         existingSprayOrder.setSpraySession(null);
+                        farmerNotificationMessage = "Your order has been cancelled.";
                     }
                     if (newStatus == SprayStatus.CONFIRMED) {
                         existingSprayOrder.setStatus(newStatus);
+                        farmerNotificationMessage = "Your order has been confirmed!";
                     }
                 }
                 if (oldStatus == SprayStatus.CONFIRMED) {
@@ -145,7 +167,7 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
 
                     List<Integer> sprayerIds = sprayOrderDTO.getSprayerAssignments()
                             .stream().map(sprayerAssignmentDTO -> sprayerAssignmentDTO.getSprayer().getId())
-                            .toList();
+                            .collect(Collectors.toList());
 
                     List<Person> sprayers = personService.getUserByIds(sprayerIds);
                     if (sprayers.isEmpty()) {
@@ -170,15 +192,19 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
                     }).collect(Collectors.toList());
                     existingSprayOrder.getSprayerAssignments().addAll(sprayerAssignments);
                     existingSprayOrder.setStatus(SprayStatus.ASSIGNED);
+                    farmerNotificationMessage = "Your order has been assigned!";
+                    sprayerNotificationMessage = "You have been assigned to a new spray order.";
                 }
                 break;
 
             case SPRAYER:
                 if (newStatus == SprayStatus.IN_PROGRESS && oldStatus == SprayStatus.ASSIGNED) {
                     existingSprayOrder.setStatus(SprayStatus.IN_PROGRESS);
+                    farmerNotificationMessage = "Your spray order is now in progress.";
                 }
                 if (newStatus == SprayStatus.SPRAY_COMPLETED && oldStatus == SprayStatus.IN_PROGRESS) {
                     existingSprayOrder.setStatus(SprayStatus.SPRAY_COMPLETED);
+                    farmerNotificationMessage = "Your spray order has been completed.";
                 }
                 break;
 
@@ -186,8 +212,7 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
                 throw new RuntimeException("Unsupported role: " + personRole);
         }
 
-
-
+        // Handle payment and order completion
         if (oldStatus == SprayStatus.SPRAY_COMPLETED && personRole == PersonRole.SPRAYER) {
             BigDecimal paymentReceivedAmount = sprayOrderDTO.getPaymentReceivedAmount();
             if (paymentReceivedAmount == null || paymentReceivedAmount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -203,9 +228,22 @@ public class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, Intege
             existingSprayOrder.setPaymentReceivedAmount(paymentReceivedAmount);
             existingSprayOrder.setChangeAmount(changeAmount);
             existingSprayOrder.setStatus(SprayStatus.COMPLETED);
+            farmerNotificationMessage = "Your spray order has been fully completed and paid.";
         }
+
+        // Send notifications
+        if (!farmerNotificationMessage.isEmpty()) {
+            notificationService.notifyFarmer(existingSprayOrder.getFarmer().getId(), farmerNotificationMessage);
+        }
+        if (!sprayerNotificationMessage.isEmpty()) {
+            for (SprayerAssignment assignment : existingSprayOrder.getSprayerAssignments()) {
+                notificationService.notifySprayer(assignment.getSprayer().getId(), sprayerNotificationMessage);
+            }
+        }
+
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
     }
+
 
     private void calculateCostPerArea(SprayOrder sprayOrder) {
         sprayOrder.setCost(sprayOrder.getArea().doubleValue() * COST_PER_DECARE);
