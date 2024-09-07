@@ -2,208 +2,306 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>hoversprite.project</groupId>
+	<artifactId>hoversprite-backend</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<name>hoversprite-backend</name>
+	<url>http://maven.apache.org</url>
+	<modules>
+		<module>hoversprite-common</module>
+		<module>hoversprite-partner</module>
+		<module>hoversprite-principle</module>
+		<module>hoversprite-message-center</module>
+		<module>hoversprite-pay</module>
+		<module>hoversprite-application</module>
+	</modules>
+
+	<properties>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<spring-boot.version>3.2.5</spring-boot.version>
+		<querydsl.version>5.1.0</querydsl.version>
+		<commons-lang3.version>3.9</commons-lang3.version>
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+		<apt-maven-plugin.version>1.1.3</apt-maven-plugin.version>
+		<h2-db.version>1.4.193</h2-db.version>
+		<common-io.version>1.3.2</common-io.version>
+		<protobuf.version>3.23.4</protobuf.version>
+		<protobuf-plugin.version>0.6.1</protobuf-plugin.version>
+		<grpc.version>1.58.0</grpc.version>
+		<jacp.version>2.1</jacp.version>
+		<org.mapstruct.version>1.3.1.Final</org.mapstruct.version>
+	</properties>
+
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.2.5</version>
-		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example</groupId>
-	<artifactId>project</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>project</name>
-	<description>Demo project for Spring Boot</description>
-	<properties>
-		<java.version>17</java.version>
-		<org.mapstruct.version>1.6.0</org.mapstruct.version>
-	</properties>
-	<dependencies>
-		<!-- Lombok for easier coding -->
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct</artifactId>
-			<version>${org.mapstruct.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct-processor</artifactId>
-			<version>${org.mapstruct.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
 
-		<!-- Spring Boot Starter Validation -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-validation</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>hoversprite-common</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>hoversprite-partner</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>hoversprite-principle</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>hoversprite-message-center</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>hoversprite-pay</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>hoversprite-application</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+<!--	<dependencyManagement>-->
+<!--		<dependencies>-->
+<!--			<dependency>-->
+<!--				<groupId>${project.groupId}</groupId>-->
+<!--				<artifactId>common</artifactId>-->
+<!--				<version>${project.version}</version>-->
+<!--			</dependency>-->
+<!--			<dependency>-->
+<!--				<groupId>${project.groupId}</groupId>-->
+<!--				<artifactId>management</artifactId>-->
+<!--				<version>${project.version}</version>-->
+<!--			</dependency>-->
+<!--			<dependency>-->
+<!--				<groupId>${project.groupId}</groupId>-->
+<!--				<artifactId>backend-app</artifactId>-->
+<!--				<version>${project.version}</version>-->
+<!--			</dependency>-->
+<!--		</dependencies>-->
+<!--	</dependencyManagement>-->
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-websocket</artifactId>
-		</dependency>
 
-
-		<!-- JUnit for testing -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-<!--		&lt;!&ndash; JSON Web Token (JWT) Dependency &ndash;&gt;-->
+<!--	<groupId>com.example</groupId>-->
+<!--	<artifactId>hoversprite-backend</artifactId>-->
+<!--	<version>0.0.1-SNAPSHOT</version>-->
+<!--	<name>project</name>-->
+<!--	<description>Demo project for Spring Boot</description>-->
+<!--	<properties>-->
+<!--		<java.version>17</java.version>-->
+<!--		<org.mapstruct.version>1.6.0</org.mapstruct.version>-->
+<!--	</properties>-->
+<!--	<dependencies>-->
+<!--		&lt;!&ndash; Lombok for easier coding &ndash;&gt;-->
 <!--		<dependency>-->
-<!--			<groupId>io.jsonwebtoken</groupId>-->
-<!--			<artifactId>jjwt</artifactId>-->
-<!--			<version>0.9.1</version>-->
+<!--			<groupId>org.projectlombok</groupId>-->
+<!--			<artifactId>lombok</artifactId>-->
+<!--			<optional>true</optional>-->
 <!--		</dependency>-->
-
-		<!-- Spring Security -->
+<!--		<dependency>-->
+<!--			<groupId>org.mapstruct</groupId>-->
+<!--			<artifactId>mapstruct</artifactId>-->
+<!--			<version>${org.mapstruct.version}</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>org.mapstruct</groupId>-->
+<!--			<artifactId>mapstruct-processor</artifactId>-->
+<!--			<version>${org.mapstruct.version}</version>-->
+<!--		</dependency>-->
 <!--		<dependency>-->
 <!--			<groupId>org.springframework.boot</groupId>-->
-<!--			<artifactId>spring-boot-starter-security</artifactId>-->
+<!--			<artifactId>spring-boot-starter-data-jpa</artifactId>-->
 <!--		</dependency>-->
 
-		<!-- Servlet API Dependency -->
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>javax.servlet-api</artifactId>
-			<version>4.0.1</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<version>1.4.200</version> <!-- Specify a stable version here -->
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.hibernate.orm</groupId>
-			<artifactId>hibernate-core</artifactId>
-			<version>6.2.0.Final</version> <!-- Ensure this is 6.2.0 or later -->
-		</dependency>
-		<dependency>
-			<groupId>jakarta.persistence</groupId>
-			<artifactId>jakarta.persistence-api</artifactId>
-			<version>3.1.0</version> <!-- Ensure this is 3.1.0 or later -->
-		</dependency>
+<!--		&lt;!&ndash; Spring Boot Starter Validation &ndash;&gt;-->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-validation</artifactId>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-web</artifactId>-->
+<!--		</dependency>-->
 
-		<dependency>
-			<groupId>jakarta.validation</groupId>
-			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.0.2</version>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.postgresql</groupId>-->
+<!--			<artifactId>postgresql</artifactId>-->
+<!--			<scope>runtime</scope>-->
+<!--		</dependency>-->
 
-		<!-- Spring Boot Web dependency -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-websocket</artifactId>-->
+<!--		</dependency>-->
 
-		<!-- Spring Boot WebSocket dependency -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-websocket</artifactId>
-		</dependency>
 
-		<!-- Spring Boot STOMP dependency for WebSocket messaging -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-activemq</artifactId>
-		</dependency>
+<!--		&lt;!&ndash; JUnit for testing &ndash;&gt;-->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-test</artifactId>-->
+<!--			<scope>test</scope>-->
+<!--		</dependency>-->
 
-		<!-- Jackson JSON processor (for serialization and deserialization) -->
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-		</dependency>
+<!--&lt;!&ndash;		&lt;!&ndash; JSON Web Token (JWT) Dependency &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;		<dependency>&ndash;&gt;-->
+<!--&lt;!&ndash;			<groupId>io.jsonwebtoken</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;			<artifactId>jjwt</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;			<version>0.9.1</version>&ndash;&gt;-->
+<!--&lt;!&ndash;		</dependency>&ndash;&gt;-->
 
-	</dependencies>
+<!--		&lt;!&ndash; Spring Security &ndash;&gt;-->
+<!--&lt;!&ndash;		<dependency>&ndash;&gt;-->
+<!--&lt;!&ndash;			<groupId>org.springframework.boot</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;			<artifactId>spring-boot-starter-security</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;		</dependency>&ndash;&gt;-->
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
+<!--		&lt;!&ndash; Servlet API Dependency &ndash;&gt;-->
+<!--		<dependency>-->
+<!--			<groupId>javax.servlet</groupId>-->
+<!--			<artifactId>javax.servlet-api</artifactId>-->
+<!--			<version>4.0.1</version>-->
+<!--			<scope>provided</scope>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>com.h2database</groupId>-->
+<!--			<artifactId>h2</artifactId>-->
+<!--			<version>1.4.200</version> &lt;!&ndash; Specify a stable version here &ndash;&gt;-->
+<!--			<scope>runtime</scope>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>org.hibernate.orm</groupId>-->
+<!--			<artifactId>hibernate-core</artifactId>-->
+<!--			<version>6.2.0.Final</version> &lt;!&ndash; Ensure this is 6.2.0 or later &ndash;&gt;-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>jakarta.persistence</groupId>-->
+<!--			<artifactId>jakarta.persistence-api</artifactId>-->
+<!--			<version>3.1.0</version> &lt;!&ndash; Ensure this is 3.1.0 or later &ndash;&gt;-->
+<!--		</dependency>-->
+
+<!--		<dependency>-->
+<!--			<groupId>jakarta.validation</groupId>-->
+<!--			<artifactId>jakarta.validation-api</artifactId>-->
+<!--			<version>3.0.2</version>-->
+<!--		</dependency>-->
+
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-mail</artifactId>-->
+<!--			<version>3.1.5</version>-->
+<!--		</dependency>-->
+
+<!--		&lt;!&ndash; Spring Boot Web dependency &ndash;&gt;-->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-web</artifactId>-->
+<!--		</dependency>-->
+
+<!--		&lt;!&ndash; Spring Boot WebSocket dependency &ndash;&gt;-->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-websocket</artifactId>-->
+<!--		</dependency>-->
+
+<!--		&lt;!&ndash; Spring Boot STOMP dependency for WebSocket messaging &ndash;&gt;-->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-activemq</artifactId>-->
+<!--		</dependency>-->
+
+<!--		&lt;!&ndash; Jackson JSON processor (for serialization and deserialization) &ndash;&gt;-->
+<!--		<dependency>-->
+<!--			<groupId>com.fasterxml.jackson.core</groupId>-->
+<!--			<artifactId>jackson-databind</artifactId>-->
+<!--		</dependency>-->
+
+<!--	</dependencies>-->
+
+<!--	<build>-->
+<!--		<plugins>-->
 <!--			<plugin>-->
-<!--				<groupId>org.apache.maven.plugins</groupId>-->
-<!--				<artifactId>maven-compiler-plugin</artifactId>-->
-<!--				<version>3.8.1</version>-->
+<!--				<groupId>org.springframework.boot</groupId>-->
+<!--				<artifactId>spring-boot-maven-plugin</artifactId>-->
 <!--				<configuration>-->
-<!--					<source>17</source> &lt;!&ndash; depending on your project &ndash;&gt;-->
-<!--					<target>17</target> &lt;!&ndash; depending on your project &ndash;&gt;-->
-<!--					<annotationProcessorPaths>-->
-<!--						<path>-->
-<!--							<groupId>org.mapstruct</groupId>-->
-<!--							<artifactId>mapstruct-processor</artifactId>-->
-<!--							<version>${org.mapstruct.version}</version>-->
-<!--						</path>-->
-<!--					</annotationProcessorPaths>-->
+<!--					<excludes>-->
+<!--						<exclude>-->
+<!--							<groupId>org.projectlombok</groupId>-->
+<!--							<artifactId>lombok</artifactId>-->
+<!--						</exclude>-->
+<!--					</excludes>-->
 <!--				</configuration>-->
 <!--			</plugin>-->
-		</plugins>
-	</build>
-	<repositories>
-		<repository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>spring-snapshots</id>
-			<name>Spring Snapshots</name>
-			<url>https://repo.spring.io/snapshot</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</repository>
-	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-		<pluginRepository>
-			<id>spring-snapshots</id>
-			<name>Spring Snapshots</name>
-			<url>https://repo.spring.io/snapshot</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</pluginRepository>
-	</pluginRepositories>
+<!--&lt;!&ndash;			<plugin>&ndash;&gt;-->
+<!--&lt;!&ndash;				<groupId>org.apache.maven.plugins</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;				<artifactId>maven-compiler-plugin</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;				<version>3.8.1</version>&ndash;&gt;-->
+<!--&lt;!&ndash;				<configuration>&ndash;&gt;-->
+<!--&lt;!&ndash;					<source>17</source> &lt;!&ndash; depending on your project &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;					<target>17</target> &lt;!&ndash; depending on your project &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;					<annotationProcessorPaths>&ndash;&gt;-->
+<!--&lt;!&ndash;						<path>&ndash;&gt;-->
+<!--&lt;!&ndash;							<groupId>org.mapstruct</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;							<artifactId>mapstruct-processor</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;							<version>${org.mapstruct.version}</version>&ndash;&gt;-->
+<!--&lt;!&ndash;						</path>&ndash;&gt;-->
+<!--&lt;!&ndash;					</annotationProcessorPaths>&ndash;&gt;-->
+<!--&lt;!&ndash;				</configuration>&ndash;&gt;-->
+<!--&lt;!&ndash;			</plugin>&ndash;&gt;-->
+<!--		</plugins>-->
+<!--	</build>-->
+<!--	<repositories>-->
+<!--		<repository>-->
+<!--			<id>spring-milestones</id>-->
+<!--			<name>Spring Milestones</name>-->
+<!--			<url>https://repo.spring.io/milestone</url>-->
+<!--			<snapshots>-->
+<!--				<enabled>false</enabled>-->
+<!--			</snapshots>-->
+<!--		</repository>-->
+<!--		<repository>-->
+<!--			<id>spring-snapshots</id>-->
+<!--			<name>Spring Snapshots</name>-->
+<!--			<url>https://repo.spring.io/snapshot</url>-->
+<!--			<releases>-->
+<!--				<enabled>false</enabled>-->
+<!--			</releases>-->
+<!--		</repository>-->
+<!--	</repositories>-->
+<!--	<pluginRepositories>-->
+<!--		<pluginRepository>-->
+<!--			<id>spring-milestones</id>-->
+<!--			<name>Spring Milestones</name>-->
+<!--			<url>https://repo.spring.io/milestone</url>-->
+<!--			<snapshots>-->
+<!--				<enabled>false</enabled>-->
+<!--			</snapshots>-->
+<!--		</pluginRepository>-->
+<!--		<pluginRepository>-->
+<!--			<id>spring-snapshots</id>-->
+<!--			<name>Spring Snapshots</name>-->
+<!--			<url>https://repo.spring.io/snapshot</url>-->
+<!--			<releases>-->
+<!--				<enabled>false</enabled>-->
+<!--			</releases>-->
+<!--		</pluginRepository>-->
+<!--	</pluginRepositories>-->
 
 </project>

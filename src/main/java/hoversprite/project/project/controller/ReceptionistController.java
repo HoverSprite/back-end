@@ -1,0 +1,47 @@
+package hoversprite.project.project.controller;
+
+import hoversprite.project.project.model.dto.SprayOrderDTO;
+import hoversprite.project.project.model.entity.PersonRole;
+import hoversprite.project.project.model.entity.SprayerAssignment;
+import hoversprite.project.project.service.SprayOrderService;
+import hoversprite.project.project.service.SprayerAssignmentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/user/{userId}/receptionist")
+public class ReceptionistController {
+
+    @Autowired
+    private SprayOrderService sprayOrderService;
+
+    @Autowired
+    private SprayerAssignmentService sprayerAssignmentService;
+
+    @PostMapping("/orders")
+    public SprayOrderDTO createOrder(@PathVariable Long userId, @RequestBody SprayOrderDTO sprayOrderDTO) {
+        return sprayOrderService.save(userId.intValue(), sprayOrderDTO, PersonRole.RECEPTIONIST);
+    }
+
+    @PatchMapping("/orders/{orderId}/assign")
+    public SprayOrderDTO assignSprayer(@PathVariable Long userId, @PathVariable Long orderId, @RequestBody SprayerAssignment sprayerAssignment) {
+        return sprayerAssignmentService.assignSprayers(orderId.intValue(), sprayerAssignment);
+    }
+
+    @PutMapping("/orders/{orderId}")
+    public SprayOrderDTO updateOrder(@PathVariable Long userId, @PathVariable Long orderId, @RequestBody SprayOrderDTO sprayOrderDTO) {
+        return sprayOrderService.update(userId.intValue(), orderId.intValue(), sprayOrderDTO, PersonRole.RECEPTIONIST);
+    }
+
+    @GetMapping("/orders")
+    public List<SprayOrderDTO> viewOrders(@PathVariable Long userId) {
+        return sprayOrderService.findAll();
+    }
+
+    @GetMapping("/orders/{orderId}")
+    public SprayOrderDTO viewOrder(@PathVariable Long userId, @PathVariable Long orderId) {
+        return sprayOrderService.findById(orderId.intValue());
+    }
+}
