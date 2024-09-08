@@ -1,6 +1,9 @@
 package hoversprite.project.partner;
 
+import hoversprite.project.common.domain.PersonExpertise;
+
 import java.util.List;
+import java.util.Map;
 
 public interface PersonGlobalService {
 
@@ -16,4 +19,6 @@ public interface PersonGlobalService {
     boolean isValidEmailAddress(String emailAddress);
 
     List<PersonDTO> getUserByIds(List<Long> ids);
+
+    Map<PersonExpertise, List<PersonDTO>> getSprayersGroupedByExpertise(List<Long> excludedIds);
 }

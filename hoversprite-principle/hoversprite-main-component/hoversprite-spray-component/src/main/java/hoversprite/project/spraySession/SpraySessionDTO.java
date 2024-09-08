@@ -15,6 +15,5 @@ public class SpraySessionDTO {
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
-    private Integer maxBookings;
-
+    private Long sprayOrder;
 }

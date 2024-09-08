@@ -8,10 +8,8 @@ import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
 import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.request.SpraySessionRequest;
-import hoversprite.project.request.SprayerAssignmentRequest;
 import hoversprite.project.spraySession.SpraySession2GlobalService;
 import hoversprite.project.spraySession.SpraySessionDTO;
-import hoversprite.project.sprayerAssignment.SprayerAssignmentDTO;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentGlobalService;
 import hoversprite.project.validator.ValidationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +40,9 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     @Autowired
     private SprayerAssignmentGlobalService sprayerAssignmentGlobalService;
 
+    @Autowired
+    private SprayOrderActionService sprayOrderActionService;
+
 //    @Autowired
 //    private NotificationService notificationService;
 
@@ -71,15 +72,13 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     protected SprayOrderDTO executeSave(Long userid, SprayOrderRequest sprayOrderRequest, PersonRole personRole) {
         SpraySessionRequest spraySessionRequest = sprayOrderRequest.getSpraySession();
         SprayOrder sprayOrder = SprayOrderMapper.INSTANCE.toEntitySave(sprayOrderRequest);
-        if (personRole == PersonRole.RECEPTIONIST) {
+        if (personRole.hasRole(PersonRole.RECEPTIONIST)) {
             sprayOrder.setStatus(SprayStatus.CONFIRMED);
             sprayOrder.setReceptionist(Long.valueOf(userid));
-        } else if (personRole == PersonRole.FARMER) {
+        } else if (personRole.hasRole(PersonRole.FARMER)) {
             sprayOrder.setFarmer(Long.valueOf(userid));
         }
         calculateCostPerArea(sprayOrder);
-
-
 
 
         SprayOrder savedSprayOrder = sprayOrderRepository.save(sprayOrder);
@@ -128,7 +127,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         String farmerNotificationMessage = "";
         String sprayerNotificationMessage = "";
 
-        if ((personRole == PersonRole.FARMER || personRole == PersonRole.RECEPTIONIST) &&
+        if ((personRole.hasRole(PersonRole.FARMER) || personRole.hasRole(PersonRole.RECEPTIONIST)) &&
                 (oldStatus == SprayStatus.PENDING || oldStatus == null) && (newStatus == SprayStatus.PENDING)) {
             existingSprayOrder.setCropType(sprayOrder.getCropType());
             existingSprayOrder.setArea(sprayOrder.getArea());
@@ -143,70 +142,27 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             existingSprayOrder.setSpraySession(savedSpraySession.getId());
         }
 
-        switch (personRole) {
-            case RECEPTIONIST:
-                if (oldStatus == SprayStatus.PENDING) {
-                    if (newStatus == SprayStatus.CANCELLED) {
-                        existingSprayOrder.setStatus(newStatus);
-                        existingSprayOrder.setSpraySession(null);
-                        farmerNotificationMessage = "Your order has been cancelled.";
-                    }
-                    if (newStatus == SprayStatus.CONFIRMED) {
-                        existingSprayOrder.setStatus(newStatus);
-                        farmerNotificationMessage = "Your order has been confirmed!";
-                    }
-                }
-                if (oldStatus == SprayStatus.CONFIRMED) {
-                    if (sprayOrder.getSprayerAssignments().isEmpty()) {
-                        throw new RuntimeException("No SPRAYERs assigned. Cannot set the status to ASSIGNED.");
-                    }
+        if (personRole == PersonRole.ADMIN) {
+            // ADMIN can perform both RECEPTIONIST and SPRAYER actions
+            handleReceptionistActions(userId, oldStatus, newStatus, sprayOrder, existingSprayOrder, personRole);
+            handleSprayerActions(oldStatus, newStatus, existingSprayOrder);
+        } else {
+            switch (personRole) {
+                case RECEPTIONIST:
+                    handleReceptionistActions(userId, oldStatus, newStatus, sprayOrder, existingSprayOrder, personRole);
+                    break;
 
-                    List<Long> sprayerIds = sprayOrder.getSprayerAssignments()
-                            .stream().map(sprayerAssignmentDTO -> sprayerAssignmentDTO.getSprayer().getId())
-                            .collect(Collectors.toList());
+                case SPRAYER:
+                    handleSprayerActions(oldStatus, newStatus, existingSprayOrder);
+                    break;
 
-                    List<PersonDTO> sprayers = personGlobalService.getUserByIds(sprayerIds);
-                    if (sprayers.isEmpty()) {
-                        throw new RuntimeException("SPRAYERs not found. Cannot set the status to ASSIGNED.");
-                    }
-
-                    boolean hasApprentice = sprayers.stream()
-                            .anyMatch(sprayer -> sprayer.getExpertise() == PersonExpertise.APPRENTICE);
-
-                    if (hasApprentice) {
-                        throw new RuntimeException("Cannot assign an Apprentice SPRAYER. Please select an Adept or Expert SPRAYER.");
-                    }
-
-                    sprayOrder.getSprayerAssignments().stream()
-                            .map(assignmentRequest -> {
-                                assignmentRequest.setSprayOrder(existingSprayOrder.getId());
-                                return sprayerAssignmentGlobalService.save(userId, assignmentRequest, personRole);
-                            })
-                            .collect(Collectors.toList());
-
-                    existingSprayOrder.setStatus(SprayStatus.ASSIGNED);
-                    farmerNotificationMessage = "Your order has been assigned!";
-                    sprayerNotificationMessage = "You have been assigned to a new spray order.";
-                }
-                break;
-
-            case SPRAYER:
-                if (newStatus == SprayStatus.IN_PROGRESS && oldStatus == SprayStatus.ASSIGNED) {
-                    existingSprayOrder.setStatus(SprayStatus.IN_PROGRESS);
-                    farmerNotificationMessage = "Your spray order is now in progress.";
-                }
-                if (newStatus == SprayStatus.SPRAY_COMPLETED && oldStatus == SprayStatus.IN_PROGRESS) {
-                    existingSprayOrder.setStatus(SprayStatus.SPRAY_COMPLETED);
-                    farmerNotificationMessage = "Your spray order has been completed.";
-                }
-                break;
-
-            default:
-                throw new RuntimeException("Unsupported role: " + personRole);
+                default:
+                    throw new RuntimeException("Unsupported role: " + personRole);
+            }
         }
 
         // Handle payment and order completion
-        if (oldStatus == SprayStatus.SPRAY_COMPLETED && personRole == PersonRole.SPRAYER) {
+        if (oldStatus == SprayStatus.SPRAY_COMPLETED && personRole.hasRole(PersonRole.SPRAYER)) {
             BigDecimal paymentReceivedAmount = sprayOrder.getPaymentReceivedAmount();
             if (paymentReceivedAmount == null || paymentReceivedAmount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new RuntimeException("Invalid payment amount. Payment must be greater than zero.");
@@ -237,6 +193,64 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
     }
 
+    private void handleReceptionistActions(Long userId, SprayStatus oldStatus, SprayStatus newStatus, SprayOrderRequest sprayOrder, SprayOrder existingSprayOrder, PersonRole personRole) {
+        if (oldStatus == SprayStatus.PENDING) {
+            if (newStatus == SprayStatus.CANCELLED) {
+                existingSprayOrder.setStatus(newStatus);
+                existingSprayOrder.setSpraySession(null);
+//                farmerNotificationMessage = "Your order has been cancelled.";
+            }
+            if (newStatus == SprayStatus.CONFIRMED) {
+                existingSprayOrder.setStatus(newStatus);
+//                farmerNotificationMessage = "Your order has been confirmed!";
+            }
+        }
+        if (oldStatus == SprayStatus.CONFIRMED) {
+            if (sprayOrder.getSprayerAssignments().isEmpty()) {
+                throw new RuntimeException("No SPRAYERs assigned. Cannot set the status to ASSIGNED.");
+            }
+
+            List<Long> sprayerIds = sprayOrder.getSprayerAssignments()
+                    .stream().map(sprayerAssignmentDTO -> sprayerAssignmentDTO.getSprayer().getId())
+                    .collect(Collectors.toList());
+
+            List<PersonDTO> sprayers = personGlobalService.getUserByIds(sprayerIds);
+            if (sprayers.isEmpty()) {
+                throw new RuntimeException("SPRAYERs not found. Cannot set the status to ASSIGNED.");
+            }
+
+            boolean hasApprentice = sprayers.stream()
+                    .anyMatch(sprayer -> sprayer.getExpertise() == PersonExpertise.APPRENTICE);
+
+            if (hasApprentice) {
+                throw new RuntimeException("Cannot assign an Apprentice SPRAYER. Please select an Adept or Expert SPRAYER.");
+            }
+
+            sprayOrder.getSprayerAssignments().stream()
+                    .map(assignmentRequest -> {
+                        assignmentRequest.setSprayOrder(existingSprayOrder.getId());
+                        return sprayerAssignmentGlobalService.save(userId, assignmentRequest, personRole);
+                    })
+                    .collect(Collectors.toList());
+
+            existingSprayOrder.setStatus(SprayStatus.ASSIGNED);
+//            farmerNotificationMessage = "Your order has been assigned!";
+//            sprayerNotificationMessage = "You have been assigned to a new spray order.";
+        }
+    }
+
+    private void handleSprayerActions(SprayStatus oldStatus, SprayStatus newStatus, SprayOrder existingSprayOrder) {
+        if (newStatus == SprayStatus.IN_PROGRESS && oldStatus == SprayStatus.ASSIGNED) {
+            existingSprayOrder.setStatus(SprayStatus.IN_PROGRESS);
+//            farmerNotificationMessage = "Your spray order is now in progress.";
+        }
+        if (newStatus == SprayStatus.SPRAY_COMPLETED && oldStatus == SprayStatus.IN_PROGRESS) {
+            existingSprayOrder.setStatus(SprayStatus.SPRAY_COMPLETED);
+//            farmerNotificationMessage = "Your spray order has been completed.";
+        }
+    }
+
+
 
     private void calculateCostPerArea(SprayOrder sprayOrder) {
         sprayOrder.setCost(sprayOrder.getArea().doubleValue() * COST_PER_DECARE);
@@ -250,5 +264,27 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     @Override
     public List<SprayOrderDTO> getOrdersBySprayer(Long sprayerId) {
         return sprayOrderRepository.getOrdersBySprayer(sprayerId).stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SprayOrderDTO> getUnAssignedSprayOrders() {
+        return sprayOrderRepository.getUnAssignedSprayOrders().stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public void automateSprayerSelection(SprayOrderDTO sprayOrder) {
+        boolean assignmentsMade = sprayOrderActionService.automateSprayerSelected(sprayOrder);
+        if (assignmentsMade) {
+            lockAndUnlockStatus(sprayOrder, SprayStatus.ASSIGNED);
+        }
+    }
+
+    @Override
+    public SprayOrderDTO lockAndUnlockStatus(SprayOrderDTO sprayOrder, SprayStatus status) {
+        SprayOrder existingSprayOrder = sprayOrderRepository.findById(sprayOrder.getId())
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + sprayOrder.getId()));
+
+        existingSprayOrder.setStatus(status);
+        return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SprayOrderDTO {
-    private Integer id;
+    private Long id;
     private PersonDTO farmer;
     private PersonDTO receptionist;
     private CropType cropType;

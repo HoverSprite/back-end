@@ -6,11 +6,13 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @SpringBootApplication(scanBasePackages = "hoversprite.project")
 @PropertySource({"classpath:/application.properties"})
+@EnableScheduling
 public class ApplicationBackendConfig extends SpringBootServletInitializer implements WebMvcConfigurer {
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {

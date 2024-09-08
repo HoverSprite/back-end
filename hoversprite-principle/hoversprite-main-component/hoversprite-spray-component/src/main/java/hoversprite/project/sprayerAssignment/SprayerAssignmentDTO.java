@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SprayerAssignmentDTO {
-    private Integer id;
+    private Long id;
     private Long sprayOrder;
     private Long sprayer;
     private Boolean isPrimary;

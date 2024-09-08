@@ -1,9 +1,12 @@
 package hoversprite.project.partner;
 
+import hoversprite.project.common.domain.PersonExpertise;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -59,6 +62,15 @@ class PersonServiceImpl implements PersonService {
     @Override
     public List<PersonDTO> getUserByIds(List<Long> ids) {
         return personRepository.getUsersById(ids).stream().map(PersonMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<PersonExpertise, List<PersonDTO>> getSprayersGroupedByExpertise(List<Long> excludedIds) {
+        List<PersonDTO> personDTOS = personRepository.getSprayersThatNotExcluded(excludedIds)
+                .stream().map(PersonMapper.INSTANCE::toDto).collect(Collectors.toList());
+
+        return personDTOS.stream()
+                .collect(Collectors.groupingBy(PersonDTO::getExpertise));
     }
 
 

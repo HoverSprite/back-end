@@ -1,5 +1,6 @@
 package hoversprite.project.spraySession;
 
+import com.querydsl.jpa.impl.JPAQuery;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -9,6 +10,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.springframework.stereotype.Repository;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -28,5 +30,22 @@ class SpraySession2RepositoryCustomImpl implements SpraySession2RepositoryCustom
         cq.where(cb.and(datePredicate, startTimePredicate));
         TypedQuery<SpraySession_2> query = em.createQuery(cq);
         return query.getResultList();
+    }
+
+    @Override
+    public List<SpraySession_2> findSpraySessionByWeek(LocalDate date) {
+        QSpraySession_2 spraySession = QSpraySession_2.spraySession_2;
+
+        // Determine the start and end of the week for the given date
+        LocalDate startOfWeek = date.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = date.with(DayOfWeek.SUNDAY);
+
+        // Create a query to find spray sessions within the week
+        JPAQuery<SpraySession_2> query = new JPAQuery<>(em);
+
+        return query.select(spraySession)
+                .from(spraySession)
+                .where(spraySession.date.between(startOfWeek, endOfWeek))
+                .fetch();
     }
 }

@@ -31,6 +31,11 @@ class SpraySession2ServiceImpl extends AbstractService<SpraySessionDTO, SpraySes
     }
 
     @Override
+    public List<SpraySessionDTO> findSpraySessionByWeek(LocalDate date) {
+        return spraySessionRepository.findSpraySessionByWeek(date).stream().map(SpraySessionMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
     public SpraySessionDTO findById(Long id) {
         return SpraySessionMapper.INSTANCE.toDto(spraySessionRepository.findById(id).orElse(null));
     }
