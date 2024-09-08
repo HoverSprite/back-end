@@ -1,0 +1,75 @@
+Subject: [PATCH] any possible changes for the refactored code
+---
+Index: hoversprite-partner/hoversprite-partner-component/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/hoversprite-partner/hoversprite-partner-component/pom.xml b/hoversprite-partner/hoversprite-partner-component/pom.xml
+--- a/hoversprite-partner/hoversprite-partner-component/pom.xml	(revision 15b1149300f95d7960c57688fa6680d025e39418)
++++ b/hoversprite-partner/hoversprite-partner-component/pom.xml	(revision 5d737f4d037e0271e3c73ff6ce31680a4ba23fc0)
+@@ -135,12 +135,7 @@
+             <artifactId>hibernate-core</artifactId>
+             <version>6.2.0.Final</version> <!-- Ensure this is 6.2.0 or later -->
+         </dependency>
+-        <dependency>
+-            <groupId>eeet2580.project</groupId>
+-            <artifactId>common</artifactId>
+-            <version>1.0-SNAPSHOT</version>
+-            <scope>compile</scope>
+-        </dependency>
++
+     </dependencies>
+ 
+     <build>
+Index: hoversprite-partner/hoversprite-partner-component/src/main/java/hoversprite/project/partner/PersonRepositoryCustomImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/hoversprite-partner/hoversprite-partner-component/src/main/java/hoversprite/project/partner/PersonRepositoryCustomImpl.java b/hoversprite-partner/hoversprite-partner-component/src/main/java/hoversprite/project/partner/PersonRepositoryCustomImpl.java
+--- a/hoversprite-partner/hoversprite-partner-component/src/main/java/hoversprite/project/partner/PersonRepositoryCustomImpl.java	(revision 15b1149300f95d7960c57688fa6680d025e39418)
++++ b/hoversprite-partner/hoversprite-partner-component/src/main/java/hoversprite/project/partner/PersonRepositoryCustomImpl.java	(revision 5d737f4d037e0271e3c73ff6ce31680a4ba23fc0)
+@@ -1,6 +1,7 @@
+ package hoversprite.project.partner;
+ 
+ import com.querydsl.jpa.impl.JPAQuery;
++import hoversprite.project.partner.QPerson;
+ import jakarta.persistence.EntityManager;
+ import jakarta.persistence.PersistenceContext;
+ import jakarta.persistence.criteria.CriteriaBuilder;
+Index: hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/pom.xml b/hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/pom.xml
+--- a/hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/pom.xml	(revision 15b1149300f95d7960c57688fa6680d025e39418)
++++ b/hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/pom.xml	(revision 5d737f4d037e0271e3c73ff6ce31680a4ba23fc0)
+@@ -134,12 +134,6 @@
+             <artifactId>hibernate-core</artifactId>
+             <version>6.2.0.Final</version> <!-- Ensure this is 6.2.0 or later -->
+         </dependency>
+-        <dependency>
+-            <groupId>eeet2580.project</groupId>
+-            <artifactId>common</artifactId>
+-            <version>1.0-SNAPSHOT</version>
+-            <scope>compile</scope>
+-        </dependency>
+     </dependencies>
+ 
+     <build>
+Index: hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/src/main/java/hoversprite/project/sprayOrder/SprayerController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/src/main/java/hoversprite/project/sprayOrder/SprayerController.java b/hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/src/main/java/hoversprite/project/sprayOrder/SprayerController.java
+--- a/hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/src/main/java/hoversprite/project/sprayOrder/SprayerController.java	(revision 15b1149300f95d7960c57688fa6680d025e39418)
++++ b/hoversprite-principle/hoversprite-main-component/hoversprite-spray-component/src/main/java/hoversprite/project/sprayOrder/SprayerController.java	(revision 5d737f4d037e0271e3c73ff6ce31680a4ba23fc0)
+@@ -27,4 +27,5 @@
+     public SprayOrderDTO viewOrder(@PathVariable Long userId, @PathVariable Long orderId) {
+         return sprayOrderService.findById(orderId);
+     }
++
+ }

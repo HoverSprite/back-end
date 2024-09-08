@@ -1,5 +1,7 @@
 package hoversprite.project.sprayOrder;
 
+import hoversprite.project.EmailService;
+import hoversprite.project.GeocodingUtil;
 import hoversprite.project.common.base.AbstractService;
 import hoversprite.project.common.domain.*;
 import hoversprite.project.common.validator.ValidationUtils;
@@ -21,6 +23,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @Transactional
@@ -48,6 +52,11 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     @Autowired
     private PaymentGlobalService paymentGlobalService;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private GeocodingUtil geocodingUtil;
 //    @Autowired
 //    private NotificationService notificationService;
 
@@ -84,6 +93,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             sprayOrder.setFarmer(Long.valueOf(userid));
         }
         calculateCostPerArea(sprayOrder);
+        sprayOrder.setLocation(sprayOrderRequest.getLocation());
 
 
         SprayOrder savedSprayOrder = sprayOrderRepository.save(sprayOrder);
@@ -91,9 +101,17 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         SpraySessionDTO savedSpraySession = spraySession2GlobalService.save(userid, spraySessionRequest, personRole);
         savedSprayOrder.setSpraySession(savedSpraySession.getId());
 
+//        // Get coordinates for the location
+        if (sprayOrder.getLatitude() == null || sprayOrder.getLongitude() == null) {
+            GeocodingUtil.LatLng coordinates = geocodingUtil.getCoordinates(sprayOrder.getLocation());
+            if (coordinates != null) {
+                sprayOrder.setLatitude(coordinates.lat);
+                sprayOrder.setLongitude(coordinates.lng);
+            }
+        }
         // Save the order
         SprayOrderDTO savedOrderDTO = SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(savedSprayOrder));
-
+//        sendConfirmationEmail(savedOrderDTO);
         // Notify the farmer about the new order
 //        notificationService.notifyFarmer(userid.longValue(), "Your order has been created successfully!");
 
@@ -138,6 +156,11 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             existingSprayOrder.setArea(sprayOrder.getArea());
             existingSprayOrder.setDateTime(sprayOrder.getDateTime());
             existingSprayOrder.setLocation(sprayOrder.getLocation());
+            GeocodingUtil.LatLng coordinates = geocodingUtil.getCoordinates(sprayOrder.getLocation());
+            if (coordinates != null) {
+                sprayOrder.setLatitude(coordinates.lat);
+                sprayOrder.setLongitude(coordinates.lng);
+            }
 
 //            for (SprayerAssignment assignment : existingSprayOrder.getSprayerAssignments()) {
 //                notificationService.notifySprayer(assignment.getSprayer().getId(), "You have been assigned to a new spray order.");
@@ -313,5 +336,47 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
 
         existingSprayOrder.setStatus(status);
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
+    }
+
+//    private void sendConfirmationEmail(SprayOrderDTO order) {
+//        PersonDTO farmer = personGlobalService.getUserByIds(List.of(order.getFarmer())).get(0);
+//        String farmerEmail = farmer.getEmailAddress();
+//
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+//        String gregorianDate = order.getDateTime().format(formatter);
+//        String lunarDate = convertToLunarDate(order.getDateTime().toLocalDate());
+//
+//        String emailSubject = "HoverSprite - Spray Order Confirmation";
+//        String emailBody = String.format(
+//                "Dear %s %s,\n\n" +
+//                        "Thank you for choosing HoverSprite for your spraying needs. Your order has been successfully booked.\n\n" +
+//                        "Order Details:\n" +
+//                        "Date (Gregorian): %s\n" +
+//                        "Date (Lunar): %s\n" +
+//                        "Time: %s\n" +
+//                        "Location: %s\n" +
+//                        "Farmland Size: %.2f decares\n" +
+//                        "Total Cost: %.2f VND\n\n" +
+//                        "We appreciate your trust in HoverSprite. Our team is committed to providing you with the best service possible.\n\n" +
+//                        "If you have any questions or need to make changes to your order, please don't hesitate to contact us.\n\n" +
+//                        "Best regards,\n" +
+//                        "The HoverSprite Team",
+//                farmer.getFirstName(), farmer.getLastName(),
+//                gregorianDate,
+//                lunarDate,
+//                order.getDateTime().format(DateTimeFormatter.ofPattern("HH:mm")),
+//                order.getLocation(),
+//                order.getArea().doubleValue(),
+//                order.getCost()
+//        );
+//
+//        emailService.sendSimpleMessage(farmerEmail, emailSubject, emailBody);
+//    }
+
+
+    private String convertToLunarDate(LocalDate gregorianDate) {
+        // Implement the conversion from Gregorian to Lunar date here
+        // This is a placeholder and should be replaced with actual conversion logic
+        return "DD/MM/YYYY";
     }
 }

@@ -26,5 +26,7 @@ public class SprayOrderDTO {
     private BigDecimal paymentReceivedAmount;
     private BigDecimal changeAmount;
     private String location;
+    private Double latitude;
+    private Double longitude;
     private Long spraySession;
 }

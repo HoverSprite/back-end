@@ -28,6 +28,8 @@ public class SprayOrderRequest {
     private BigDecimal paymentReceivedAmount;
     private BigDecimal changeAmount;
     private String location;
+    private Double latitude;
+    private Double longitude;
     private List<SprayerAssignmentRequest> sprayerAssignments;
     private SpraySessionRequest spraySession;
     private PaymentRequest payment;

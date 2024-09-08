@@ -14,9 +14,10 @@ interface SprayOrderMapper {
     @Mapping(target = "receptionist", ignore = true)
     @Mapping(target = "spraySession", ignore = true)
     @Mapping(target = "status", expression = "java(mapStatusToPending())")
-    @Mapping(target = "farmer", ignore = true) // Ignore the farmer field to prevent recursion
+    @Mapping(target = "farmer", ignore = true)
+    @Mapping(target = "latitude", source = "latitude")
+    @Mapping(target = "longitude", source = "longitude")
     SprayOrder toEntitySave(SprayOrderRequest request);
-
 
     SprayOrderDTO toDto(SprayOrder entity);
 
@@ -24,4 +25,3 @@ interface SprayOrderMapper {
         return SprayStatus.PENDING;
     }
 }
-

@@ -52,6 +52,12 @@ class SprayOrder {
     @Column(name = "LOCATION", nullable = false)
     private String location;
 
+    @Column(name = "LATITUDE")
+    private Double latitude;
+
+    @Column(name = "LONGITUDE")
+    private Double longitude;
+
     @Column(name = "SPRAY_SESSION_ID")
     private Long spraySession;
 }
