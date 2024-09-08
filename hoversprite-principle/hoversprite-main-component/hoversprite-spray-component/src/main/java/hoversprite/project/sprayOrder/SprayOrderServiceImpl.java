@@ -1,22 +1,23 @@
 package hoversprite.project.sprayOrder;
 
-import hoversprite.project.base.AbstractService;
-import hoversprite.project.common.domain.PersonExpertise;
-import hoversprite.project.common.domain.PersonRole;
-import hoversprite.project.common.domain.SprayStatus;
+import hoversprite.project.common.base.AbstractService;
+import hoversprite.project.common.domain.*;
+import hoversprite.project.common.validator.ValidationUtils;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
+import hoversprite.project.payment.PaymentGlobalService;
+import hoversprite.project.payment.request.PaymentRequest;
 import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.request.SpraySessionRequest;
 import hoversprite.project.spraySession.SpraySession2GlobalService;
 import hoversprite.project.spraySession.SpraySessionDTO;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentGlobalService;
-import hoversprite.project.validator.ValidationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,9 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
 
     @Autowired
     private SprayOrderActionService sprayOrderActionService;
+
+    @Autowired
+    private PaymentGlobalService paymentGlobalService;
 
 //    @Autowired
 //    private NotificationService notificationService;
@@ -176,6 +180,17 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             BigDecimal changeAmount = paymentReceivedAmount.subtract(totalCost);
             existingSprayOrder.setPaymentReceivedAmount(paymentReceivedAmount);
             existingSprayOrder.setChangeAmount(changeAmount);
+
+            paymentGlobalService.save(userId,
+                    PaymentRequest.builder()
+                            .sprayOrder(existingSprayOrder.getId())
+                            .farmer(userId)
+                            .amount(paymentReceivedAmount)
+                            .paymentMethod(sprayOrder.getPayment().getPaymentMethod())
+                            .paymentDate(LocalDateTime.now())
+                            .status(sprayOrder.getPayment().getStatus())
+                            .build(), personRole);
+
             existingSprayOrder.setStatus(SprayStatus.COMPLETED);
             farmerNotificationMessage = "Your spray order has been fully completed and paid.";
         }

@@ -1,6 +1,6 @@
 package hoversprite.project;
 
-import hoversprite.project.validator.ValidationUtils;
+import hoversprite.project.common.validator.ValidationUtils;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;

@@ -13,9 +13,9 @@
 	<modules>
 		<module>hoversprite-common</module>
 		<module>hoversprite-partner</module>
+		<module>hoversprite-pay</module>
 		<module>hoversprite-principle</module>
 		<module>hoversprite-message-center</module>
-		<module>hoversprite-pay</module>
 		<module>hoversprite-application</module>
 	</modules>
 

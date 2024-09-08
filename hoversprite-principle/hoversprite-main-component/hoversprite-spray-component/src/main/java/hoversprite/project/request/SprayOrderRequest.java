@@ -2,6 +2,7 @@ package hoversprite.project.request;
 
 import hoversprite.project.common.domain.CropType;
 import hoversprite.project.common.domain.SprayStatus;
+import hoversprite.project.payment.request.PaymentRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,4 +30,5 @@ public class SprayOrderRequest {
     private String location;
     private List<SprayerAssignmentRequest> sprayerAssignments;
     private SpraySessionRequest spraySession;
+    private PaymentRequest payment;
 }

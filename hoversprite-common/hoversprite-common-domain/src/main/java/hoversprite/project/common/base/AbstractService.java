@@ -1,7 +1,7 @@
-package hoversprite.project.base;
+package hoversprite.project.common.base;
 
 
-import hoversprite.project.validator.ValidationUtils;
+import hoversprite.project.common.validator.ValidationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package hoversprite.project.sprayerAssignment;
 
 
-import hoversprite.project.base.BaseService;
+import hoversprite.project.common.base.BaseService;
 import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.request.SprayerAssignmentRequest;
 import hoversprite.project.sprayOrder.SprayOrderDTO;

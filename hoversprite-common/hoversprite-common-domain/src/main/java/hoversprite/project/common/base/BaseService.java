@@ -1,4 +1,4 @@
-package hoversprite.project.base;
+package hoversprite.project.common.base;
 
 import java.util.List;
 

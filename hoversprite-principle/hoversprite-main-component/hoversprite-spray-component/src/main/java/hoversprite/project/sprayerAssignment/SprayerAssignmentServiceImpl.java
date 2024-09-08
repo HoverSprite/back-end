@@ -1,13 +1,12 @@
 package hoversprite.project.sprayerAssignment;
 
-import hoversprite.project.base.AbstractService;
+import hoversprite.project.common.base.AbstractService;
 import hoversprite.project.common.domain.PersonRole;
+import hoversprite.project.common.validator.ValidationUtils;
 import hoversprite.project.request.SprayerAssignmentRequest;
 import hoversprite.project.sprayOrder.SprayOrderDTO;
-import hoversprite.project.sprayOrder.SprayOrderGlobalService;
 import hoversprite.project.spraySession.SpraySession2GlobalService;
 import hoversprite.project.spraySession.SpraySessionDTO;
-import hoversprite.project.validator.ValidationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

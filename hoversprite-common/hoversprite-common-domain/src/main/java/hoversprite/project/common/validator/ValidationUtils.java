@@ -1,4 +1,4 @@
-package hoversprite.project.validator;
+package hoversprite.project.common.validator;
 
 import java.util.HashMap;
 import java.util.Map;

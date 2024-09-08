@@ -1,8 +1,7 @@
 package hoversprite.project.spraySession;
 
+import hoversprite.project.common.base.BaseService;
 import hoversprite.project.common.domain.PersonRole;
-import hoversprite.project.base.BaseService;
-import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.request.SpraySessionRequest;
 
 import java.time.LocalDate;
