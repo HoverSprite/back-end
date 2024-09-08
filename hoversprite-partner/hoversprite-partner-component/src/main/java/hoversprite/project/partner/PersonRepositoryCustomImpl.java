@@ -1,6 +1,7 @@
 package hoversprite.project.partner;
 
 import com.querydsl.jpa.impl.JPAQuery;
+import hoversprite.project.partner.QPerson;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
