@@ -49,7 +49,7 @@ public class AutomationSprayerAssignmentTasks {
             try {
                 secureContext.allowAccess();
                 SprayOrderDTO updateSprayOrder = sprayOrderGlobalService.lockAndUnlockStatus(unAssignedSprayOrder, SprayStatus.ASSIGN_PROCESSING);
-                sprayOrderGlobalService.automateSprayerSelection(updateSprayOrder);
+                sprayOrderGlobalService.automateSprayerSelection(updateSprayOrder, previousStatus);
             } catch (Exception e) {
                 // Log individual failures
                 logger.error("Failed to process spray order: " + unAssignedSprayOrder, e);

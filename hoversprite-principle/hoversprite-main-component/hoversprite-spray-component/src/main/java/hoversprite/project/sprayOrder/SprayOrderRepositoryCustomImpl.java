@@ -27,27 +27,6 @@ class SprayOrderRepositoryCustomImpl implements SprayOrderRepositoryCustom {
                 .fetch();
     }
 
-
-
-    @Override
-    public List<SprayOrder> getOrdersBySprayer(long id) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<SprayOrder> cq = cb.createQuery(SprayOrder.class);
-        Root<SprayOrder> sprayOrderRoot = cq.from(SprayOrder.class);
-
-        // Perform a fetch join to eagerly load 'farmer' and 'spraySession'
-        sprayOrderRoot.fetch("farmer", JoinType.LEFT);
-        sprayOrderRoot.fetch("spraySession", JoinType.LEFT);
-
-        // Create predicate to filter by farmer ID
-        Predicate farmerPredicate = cb.equal(sprayOrderRoot.get("farmer").get("id"), id);
-        cq.where(farmerPredicate);
-        cq.distinct(true);
-
-        TypedQuery<SprayOrder> query = em.createQuery(cq);
-        return query.getResultList();
-    }
-
     @Override
     public List<SprayOrder> getUnAssignedSprayOrders() {
         return new JPAQuery<SprayOrder>(em)
@@ -55,4 +34,14 @@ class SprayOrderRepositoryCustomImpl implements SprayOrderRepositoryCustom {
                 .where(QSprayOrder.sprayOrder.status.eq(SprayStatus.CONFIRMED))
                 .fetch();
     }
+
+    @Override
+    public List<SprayOrder> findAllAvailableSprayOrderForSprayerByIds(List<Long> ids) {
+        return new JPAQuery<SprayOrder>(em)
+                .from(QSprayOrder.sprayOrder)
+                .where(QSprayOrder.sprayOrder.status.eq(SprayStatus.ASSIGNED)
+                        .and(QSprayOrder.sprayOrder.id.in(ids)))
+                .fetch();
+    }
+
 }

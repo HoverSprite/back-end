@@ -11,6 +11,7 @@ import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.request.SpraySessionRequest;
 import hoversprite.project.spraySession.SpraySession2GlobalService;
 import hoversprite.project.spraySession.SpraySessionDTO;
+import hoversprite.project.sprayerAssignment.SprayerAssignmentDTO;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentGlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -278,7 +279,16 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
 
     @Override
     public List<SprayOrderDTO> getOrdersBySprayer(Long sprayerId) {
-        return sprayOrderRepository.getOrdersBySprayer(sprayerId).stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
+        List<SprayerAssignmentDTO> sprayerAssignmentDTOs = sprayerAssignmentGlobalService.findAssignmentsForSprayer(sprayerId);
+        List<Long> sprayOrderIds = sprayerAssignmentDTOs.stream().map(SprayerAssignmentDTO::getSprayOrder).collect(Collectors.toList());
+        return sprayOrderRepository.findAllById(sprayOrderIds).stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SprayOrderDTO> getAvailableSprayOrdersBySprayer(Long sprayerId) {
+        List<SprayerAssignmentDTO> sprayerAssignmentDTOs = sprayerAssignmentGlobalService.findAssignmentsForSprayer(sprayerId);
+        List<Long> sprayOrderIds = sprayerAssignmentDTOs.stream().map(SprayerAssignmentDTO::getSprayOrder).collect(Collectors.toList());
+        return sprayOrderRepository.findAllAvailableSprayOrderForSprayerByIds(sprayOrderIds).stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
     }
 
     @Override
@@ -287,10 +297,12 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     }
 
     @Override
-    public void automateSprayerSelection(SprayOrderDTO sprayOrder) {
+    public void automateSprayerSelection(SprayOrderDTO sprayOrder, SprayStatus previousStatus) {
         boolean assignmentsMade = sprayOrderActionService.automateSprayerSelected(sprayOrder);
         if (assignmentsMade) {
             lockAndUnlockStatus(sprayOrder, SprayStatus.ASSIGNED);
+        } else {
+            lockAndUnlockStatus(sprayOrder, previousStatus);
         }
     }
 

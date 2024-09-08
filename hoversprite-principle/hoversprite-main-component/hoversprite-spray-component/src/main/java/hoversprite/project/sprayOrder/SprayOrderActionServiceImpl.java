@@ -140,7 +140,7 @@ class SprayOrderActionServiceImpl implements SprayOrderActionService {
         List<SprayerAssignmentRequest> assignmentRequests = selectedSprayers.stream()
                 .map(selectedSprayer -> SprayerAssignmentRequest.builder()
                         .sprayOrder(sprayOrderId)
-                        .sprayer(PersonRequest.builder().id(sprayOrderId).build())
+                        .sprayer(PersonRequest.builder().id(selectedSprayer.getId()).build())
                         .isPrimary(true).build())
                 .collect(Collectors.toList());
 

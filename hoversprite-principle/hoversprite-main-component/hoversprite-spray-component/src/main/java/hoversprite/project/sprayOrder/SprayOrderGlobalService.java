@@ -13,10 +13,12 @@ public interface SprayOrderGlobalService   extends BaseService<SprayOrderDTO, Sp
 
     List<SprayOrderDTO> getOrdersBySprayer(Long sprayerId);
 
+    List<SprayOrderDTO> getAvailableSprayOrdersBySprayer(Long sprayerId);
+
     List<SprayOrderDTO> getUnAssignedSprayOrders();
 
     @RestrictAccess
-    void automateSprayerSelection (SprayOrderDTO sprayOrder);
+    void automateSprayerSelection (SprayOrderDTO sprayOrder, SprayStatus previousStatus);
 
     @RestrictAccess
     SprayOrderDTO lockAndUnlockStatus(SprayOrderDTO sprayOrder, SprayStatus status);

@@ -19,4 +19,6 @@ public interface SprayerAssignmentGlobalService  extends BaseService<SprayerAssi
     List<Long> findUnAvailableSprayerIds(SprayOrderDTO sprayOrderDTO);
 
     List<SprayerAssignmentDTO> findSprayerAssignmentInTheWeek(List<Long> sprayOrderIds, List<Long> sprayerIds);
+
+    List<SprayerAssignmentDTO> findAssignmentsForSprayer(Long sprayerId);
 }

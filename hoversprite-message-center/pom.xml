@@ -15,6 +15,7 @@
     <modules>
         <module>hoversprite-notification-component</module>
         <module>hoversprite-mail-component</module>
+        <module>hoversprite-sms-component</module>
     </modules>
 
     <properties>

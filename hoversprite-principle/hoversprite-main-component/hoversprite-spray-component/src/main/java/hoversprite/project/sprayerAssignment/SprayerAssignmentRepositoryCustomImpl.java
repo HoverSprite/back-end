@@ -28,4 +28,12 @@ class SprayerAssignmentRepositoryCustomImpl implements SprayerAssignmentReposito
                         .and(QSprayerAssignment.sprayerAssignment.sprayer.in(sprayerIds)))
                 .fetch();
     }
+
+    @Override
+    public List<SprayerAssignment> findAssignmentsBySprayer(Long sprayerId) {
+        return new JPAQuery<SprayerAssignment>(em)
+                .from(QSprayerAssignment.sprayerAssignment)
+                .where(QSprayerAssignment.sprayerAssignment.sprayer.eq(sprayerId))
+                .fetch();
+    }
 }
