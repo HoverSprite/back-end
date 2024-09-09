@@ -9,5 +9,5 @@ import java.util.Map;
 public interface OneTimeCodeGlobalService {
     String createOtp(Long userId);
 
-    boolean verifyOtp(Long sprayOrderId, OTCRequest otp);
+    boolean verifyOtp(Long userId, Long sprayOrderId, OTCRequest otp);
 }

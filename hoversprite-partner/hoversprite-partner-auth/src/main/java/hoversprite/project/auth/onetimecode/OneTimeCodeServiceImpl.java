@@ -35,7 +35,7 @@ class OneTimeCodeServiceImpl implements OneTimeCodeService {
     }
 
     @Override
-    public boolean verifyOtp(Long sprayOrderId, OTCRequest otp) {
+    public boolean verifyOtp(Long userId, Long sprayOrderId, OTCRequest otp) {
         SprayOrderDTO sprayOrder = sprayOrderGlobalService.findById(sprayOrderId);
         Optional<OneTimeCode> code = oneTimeCodeRepository.findByUserId(sprayOrder.getFarmer());
         return code.map(oneTimeCode -> oneTimeCode.getOtpCode().equals(otp.getOtp())).orElse(false);
