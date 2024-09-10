@@ -24,4 +24,3 @@ interface SprayOrderMapper {
         return SprayStatus.PENDING;
     }
 }
-

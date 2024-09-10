@@ -11,4 +11,6 @@ public interface SprayOrderService  extends BaseService<SprayOrderDTO, SprayOrde
     List<SprayOrderDTO> getOrdersByUser(long userId);
 
     List<SprayOrderDTO> getOrdersBySprayer(Long sprayerId);
+
+    SprayOrderDTO findById(Long id);
 }
