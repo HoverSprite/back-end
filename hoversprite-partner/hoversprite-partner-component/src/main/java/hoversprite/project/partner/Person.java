@@ -52,6 +52,8 @@ class Person {
     @Column(name = "PROFILE_PICTURE_URL")
     private String profilePictureUrl;
 
+    //MODIFY
+
     @PrePersist
     public void setDefaultProfilePicture() {
         if (this.profilePictureUrl == null || this.profilePictureUrl.isEmpty()) {
