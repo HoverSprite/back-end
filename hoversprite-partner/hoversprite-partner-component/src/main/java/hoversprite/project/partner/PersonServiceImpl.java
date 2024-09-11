@@ -1,6 +1,7 @@
 package hoversprite.project.partner;
 
 import hoversprite.project.common.domain.PersonExpertise;
+import hoversprite.project.common.domain.PersonRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -71,6 +72,12 @@ class PersonServiceImpl implements PersonService {
 
         return personDTOS.stream()
                 .collect(Collectors.groupingBy(PersonDTO::getExpertise));
+    }
+
+    @Override
+    public PersonDTO findFarmerByPhoneNumber(String phoneNumber) {
+        Optional<Person> person = personRepository.findByPhoneNumberAndRole(phoneNumber, PersonRole.FARMER);
+        return person.map(PersonMapper.INSTANCE::toDto).orElse(null);
     }
 
 

@@ -1,5 +1,6 @@
 package hoversprite.project.partner;
 
+import hoversprite.project.common.domain.PersonRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,4 +15,5 @@ interface PersonRepository extends JpaRepository<Person, Long>, PersonRepository
     // Method to search by email or phone number
     Optional<Person> findByEmailAddress(String emailAddress);
     Optional<Person> findByPhoneNumber(String phoneNumber);
+    Optional<Person> findByPhoneNumberAndRole(String phoneNumber, PersonRole role);
 }

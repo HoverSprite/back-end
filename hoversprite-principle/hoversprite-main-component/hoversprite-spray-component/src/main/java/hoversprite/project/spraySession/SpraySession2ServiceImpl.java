@@ -11,7 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,7 +58,9 @@ class SpraySession2ServiceImpl extends AbstractService<SpraySessionDTO, SpraySes
     private void verifySessionAvailable(ValidationUtils validator, SpraySessionRequest spraySessionRequest) {
         if (spraySessionRequest.getId() == null) {
             List<SpraySessionDTO> existingSessions = findSpraySessionByDate(spraySessionRequest.getDate(), spraySessionRequest.getStartTime());
-            validator.isTrue(existingSessions.size() < MAX_SPRAYS_SESSIONS_IN_ONE_HOUR, NO_MORE_THAN_2_SESSIONS_ALLOWED_AT_THE_SAME_TIME);
+            if (existingSessions.size() >= MAX_SPRAYS_SESSIONS_IN_ONE_HOUR) {
+                throw new RuntimeException(NO_MORE_THAN_2_SESSIONS_ALLOWED_AT_THE_SAME_TIME);
+            }
         }
     }
 
@@ -87,5 +92,34 @@ class SpraySession2ServiceImpl extends AbstractService<SpraySessionDTO, SpraySes
             return SpraySessionMapper.INSTANCE.toDto(spraySessionRepository.save(updatedSpraySession));
         }
         return previousSpraySession;
+    }
+
+    @Override
+    public Map<LocalDate, List<LocalTime>> getAvailableSlotsForWeek(LocalDate startDate) {
+        List<SpraySessionDTO> bookedSessions = findSpraySessionByWeek(startDate);
+        Map<LocalDate, List<LocalTime>> availableSlots = new HashMap<>();
+
+        LocalDate endDate = startDate.plusDays(6);
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            List<LocalTime> availableTimesForDay = getAvailableTimesForDay(date, bookedSessions);
+            availableSlots.put(date, availableTimesForDay);
+        }
+
+        return availableSlots;
+    }
+
+    private List<LocalTime> getAvailableTimesForDay(LocalDate date, List<SpraySessionDTO> bookedSessions) {
+        List<LocalTime> allSlots = Arrays.asList(
+                LocalTime.of(4, 0), LocalTime.of(5, 0), LocalTime.of(6, 0), LocalTime.of(7, 0),
+                LocalTime.of(16, 0), LocalTime.of(17, 0)
+        );
+
+        Map<LocalTime, Long> bookedSlotsCount = bookedSessions.stream()
+                .filter(session -> session.getDate().equals(date))
+                .collect(Collectors.groupingBy(SpraySessionDTO::getStartTime, Collectors.counting()));
+
+        return allSlots.stream()
+                .filter(slot -> bookedSlotsCount.getOrDefault(slot, 0L) < MAX_SPRAYS_SESSIONS_IN_ONE_HOUR)
+                .collect(Collectors.toList());
     }
 }

@@ -32,7 +32,7 @@ public class ApplicationBackendConfig extends SpringBootServletInitializer imple
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("*")  // Change this to your frontend URL
+                .allowedOriginPatterns("*")  // Change this to your frontend URL
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);

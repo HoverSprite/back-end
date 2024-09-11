@@ -2,6 +2,7 @@ package hoversprite.project.sprayOrder;
 
 import hoversprite.project.EmailService;
 import hoversprite.project.GeocodingUtil;
+import hoversprite.project.notification.NotificationService;
 import hoversprite.project.common.base.AbstractService;
 import hoversprite.project.common.domain.*;
 import hoversprite.project.common.validator.ValidationUtils;
@@ -24,7 +25,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 @Service
 @Transactional
@@ -57,8 +57,9 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
 
     @Autowired
     private GeocodingUtil geocodingUtil;
-//    @Autowired
-//    private NotificationService notificationService;
+
+    @Autowired
+    private NotificationService notificationService;
 
 
     @Override
@@ -113,8 +114,11 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         SprayOrderDTO savedOrderDTO = SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(savedSprayOrder));
 //        sendConfirmationEmail(savedOrderDTO);
         // Notify the farmer about the new order
-//        notificationService.notifyFarmer(userid.longValue(), "Your order has been created successfully!");
-
+        if (personRole.hasRole(PersonRole.FARMER)) {
+            notificationService.notifyFarmer(savedOrderDTO.getFarmer(), "Your spray order has been created successfully and is pending confirmation.");
+        } else if (personRole.hasRole(PersonRole.RECEPTIONIST)) {
+            notificationService.notifyFarmer(savedOrderDTO.getFarmer(), "A new spray order has been created and confirmed for you by a receptionist.");
+        }
         return savedOrderDTO;
     }
 
@@ -146,9 +150,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         SprayStatus newStatus = sprayOrder.getStatus();
         SprayStatus oldStatus = existingSprayOrder.getStatus();
 
-        // Notification messages
-        String farmerNotificationMessage = "";
-        String sprayerNotificationMessage = "";
+
 
         if ((personRole.hasRole(PersonRole.FARMER) || personRole.hasRole(PersonRole.RECEPTIONIST)) &&
                 (oldStatus == SprayStatus.PENDING || oldStatus == null) && (newStatus == SprayStatus.PENDING)) {
@@ -168,6 +170,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             sprayOrder.getSpraySession().setSprayOrder(existingSprayOrder.getId());
             SpraySessionDTO savedSpraySession = spraySession2GlobalService.update(userId, existingSprayOrder.getSpraySession(), sprayOrder.getSpraySession(), personRole);
             existingSprayOrder.setSpraySession(savedSpraySession.getId());
+            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order details have been updated.");
         }
 
         if (personRole == PersonRole.ADMIN) {
@@ -216,18 +219,9 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                             .build(), personRole);
 
             existingSprayOrder.setStatus(SprayStatus.COMPLETED);
-            farmerNotificationMessage = "Your spray order has been fully completed and paid.";
+            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been fully completed and paid.");
         }
 
-//        // Send notifications
-//        if (!farmerNotificationMessage.isEmpty()) {
-//            notificationService.notifyFarmer(existingSprayOrder.getFarmer().getId(), farmerNotificationMessage);
-//        }
-//        if (!sprayerNotificationMessage.isEmpty()) {
-//            for (SprayerAssignment assignment : existingSprayOrder.getSprayerAssignments()) {
-//                notificationService.notifySprayer(assignment.getSprayer().getId(), sprayerNotificationMessage);
-//            }
-//        }
 
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
     }
@@ -237,12 +231,10 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             if (newStatus == SprayStatus.CANCELLED) {
                 existingSprayOrder.setStatus(newStatus);
                 existingSprayOrder.setSpraySession(null);
-//                farmerNotificationMessage = "Your order has been cancelled.";
-            }
+                notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been cancelled.");            }
             if (newStatus == SprayStatus.CONFIRMED) {
                 existingSprayOrder.setStatus(newStatus);
-//                farmerNotificationMessage = "Your order has been confirmed!";
-            }
+                notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been confirmed!");            }
         }
         if (oldStatus == SprayStatus.CONFIRMED) {
             if (sprayOrder.getSprayerAssignments().isEmpty()) {
@@ -273,20 +265,18 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                     .collect(Collectors.toList());
 
             existingSprayOrder.setStatus(SprayStatus.ASSIGNED);
-//            farmerNotificationMessage = "Your order has been assigned!";
-//            sprayerNotificationMessage = "You have been assigned to a new spray order.";
+            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Sprayers have been assigned to your order.");
+
         }
     }
 
     private void handleSprayerActions(SprayStatus oldStatus, SprayStatus newStatus, SprayOrder existingSprayOrder) {
         if (newStatus == SprayStatus.IN_PROGRESS && oldStatus == SprayStatus.ASSIGNED) {
             existingSprayOrder.setStatus(SprayStatus.IN_PROGRESS);
-//            farmerNotificationMessage = "Your spray order is now in progress.";
-        }
+            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order is now in progress.");        }
         if (newStatus == SprayStatus.SPRAY_COMPLETED && oldStatus == SprayStatus.IN_PROGRESS) {
             existingSprayOrder.setStatus(SprayStatus.SPRAY_COMPLETED);
-//            farmerNotificationMessage = "Your spray order has been completed.";
-        }
+            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Spraying for your order has been completed. Please proceed with payment.");        }
     }
 
 
