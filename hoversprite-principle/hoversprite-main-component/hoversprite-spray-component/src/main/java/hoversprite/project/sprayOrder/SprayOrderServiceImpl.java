@@ -5,12 +5,16 @@ import hoversprite.project.GeocodingUtil;
 import hoversprite.project.common.base.AbstractService;
 import hoversprite.project.common.domain.*;
 import hoversprite.project.common.validator.ValidationUtils;
+import hoversprite.project.mapper.PersonResponseMapper;
+import hoversprite.project.mapper.SpraySessionResponseMapper;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
 import hoversprite.project.payment.PaymentGlobalService;
 import hoversprite.project.payment.request.PaymentRequest;
 import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.request.SpraySessionRequest;
+import hoversprite.project.response.SprayOrderResponse;
+import hoversprite.project.response.SprayerAssignmentResponse;
 import hoversprite.project.spraySession.SpraySession2GlobalService;
 import hoversprite.project.spraySession.SpraySessionDTO;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentDTO;
@@ -21,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
@@ -317,6 +322,39 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     @Override
     public List<SprayOrderDTO> getUnAssignedSprayOrders() {
         return sprayOrderRepository.getUnAssignedSprayOrders().stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public SprayOrderResponse findSprayOrderDetails(Long sprayOrderId) {
+        SprayOrderDTO sprayOrderDTO = findById(sprayOrderId);
+        SpraySessionDTO spraySessionDTO = spraySession2GlobalService.findById(sprayOrderDTO.getSpraySession());
+        List<SprayerAssignmentDTO> sprayerAssignmentDTOS = sprayerAssignmentGlobalService.findAllBySprayOrderIds(Collections.singletonList(spraySessionDTO.getSprayOrder()));
+
+        List<SprayerAssignmentResponse> sprayerAssignmentResponses = sprayerAssignmentDTOS.stream()
+                .map(sprayerAssignmentDTO -> {
+                    return SprayerAssignmentResponse.builder()
+                            .id(sprayerAssignmentDTO.getId())
+                            .isPrimary(sprayerAssignmentDTO.getIsPrimary())
+                            .sprayer(PersonResponseMapper.INSTANCE.toReponse(personGlobalService.findById(sprayerAssignmentDTO.getSprayer())))
+                            .build();
+                }).collect(Collectors.toList());
+
+
+        return SprayOrderResponse.builder()
+                .farmer(PersonResponseMapper.INSTANCE.toReponse(personGlobalService.findById(sprayOrderDTO.getFarmer())))
+                .cropType(sprayOrderDTO.getCropType())
+                .area(sprayOrderDTO.getArea())
+                .cost(sprayOrderDTO.getCost())
+                .dateTime(sprayOrderDTO.getDateTime())
+                .latitude(sprayOrderDTO.getLatitude())
+                .location(sprayOrderDTO.getLocation())
+                .longitude(sprayOrderDTO.getLongitude())
+                .sprayerAssignments(sprayerAssignmentResponses)
+                .changeAmount(sprayOrderDTO.getChangeAmount())
+                .status(sprayOrderDTO.getStatus())
+                .spraySession(SpraySessionResponseMapper.INSTANCE.toResponse(spraySessionDTO))
+                .id(sprayOrderDTO.getId())
+                .build();
     }
 
     @Override

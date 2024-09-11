@@ -2,7 +2,10 @@ package hoversprite.project.sprayOrder;
 
 import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.request.SprayOrderRequest;
+import hoversprite.project.response.SprayOrderResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,8 +28,8 @@ public class FarmerController {
     }
 
     @GetMapping("/orders/{orderId}")
-    public SprayOrderDTO viewOrder(@PathVariable Long userId, @PathVariable Long orderId) {
-        return sprayOrderService.findById(orderId);
+    public ResponseEntity<SprayOrderResponse> viewOrder(@PathVariable Long userId, @PathVariable Long orderId) {
+        return new ResponseEntity<>(sprayOrderService.findSprayOrderDetails(orderId), HttpStatus.OK);
     }
 
     @PutMapping("/orders/{orderId}")
