@@ -17,8 +17,8 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 
 @Component
-public class AutomationSprayerAssignmentTasks {
-    private static final Logger logger = LoggerFactory.getLogger(AutomationSprayerAssignmentTasks.class);
+public class ScheduleAutomationSprayerAssignmentTasks {
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleAutomationSprayerAssignmentTasks.class);
 
     @Autowired
     private SecureContext secureContext;

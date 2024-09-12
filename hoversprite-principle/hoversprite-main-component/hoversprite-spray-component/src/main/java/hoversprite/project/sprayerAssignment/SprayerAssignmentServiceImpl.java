@@ -60,6 +60,11 @@ class SprayerAssignmentServiceImpl extends AbstractService<SprayerAssignmentDTO,
     }
 
     @Override
+    public void deleteAllByIds(List<Long> ids) {
+        sprayerAssignmentRepository.deleteAllById(ids);
+    }
+
+    @Override
     public SprayerAssignmentDTO findById(Long aLong) {
         return sprayerAssignmentRepository.findById(aLong).map(SprayerAssignmentMapper.INSTANCE::toDto).orElse(null);
     }

@@ -60,4 +60,7 @@ class SprayOrder {
 
     @Column(name = "SPRAY_SESSION_ID")
     private Long spraySession;
+
+    @Column(name = "AUTO_ASSIGNED")
+    private boolean autoAssign = true;
 }

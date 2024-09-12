@@ -21,4 +21,6 @@ public interface SprayerAssignmentGlobalService  extends BaseService<SprayerAssi
     List<SprayerAssignmentDTO> findSprayerAssignmentInTheWeek(List<Long> sprayOrderIds, List<Long> sprayerIds);
 
     List<SprayerAssignmentDTO> findAssignmentsForSprayer(Long sprayerId);
+
+    void deleteAllByIds(List<Long> ids);
 }
