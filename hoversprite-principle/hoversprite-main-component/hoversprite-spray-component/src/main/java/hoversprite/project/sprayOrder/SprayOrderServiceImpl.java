@@ -195,7 +195,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         }
 
         // Handle payment and order completion
-        if (oldStatus == SprayStatus.SPRAY_COMPLETED && personRole.hasRole(PersonRole.SPRAYER)) {
+        if (oldStatus == SprayStatus.SPRAY_COMPLETED && (personRole.hasRole(PersonRole.SPRAYER) || personRole.hasRole(PersonRole.RECEPTIONIST))) {
             BigDecimal paymentReceivedAmount = sprayOrder.getPaymentReceivedAmount();
             if (paymentReceivedAmount == null || paymentReceivedAmount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new RuntimeException("Invalid payment amount. Payment must be greater than zero.");
