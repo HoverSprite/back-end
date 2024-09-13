@@ -56,6 +56,23 @@ class PersonServiceImpl implements PersonService {
     }
 
     @Override
+    public PersonDTO findFarmerById(Long farmerId) {
+        Optional<Person> farmerOptional = personRepository.findById(farmerId);
+
+        if (farmerOptional.isPresent()) {
+            Person farmer = farmerOptional.get();
+
+            // Check if the person is actually a farmer
+            if (farmer.getRole() == PersonRole.FARMER) {
+                return PersonMapper.INSTANCE.toDto(farmer);
+            }
+        }
+
+        // Return null if no farmer is found or if the person is not a farmer
+        return null;
+    }
+
+    @Override
     public boolean isValidEmailAddress(String emailAddress) {
         return true;
     }

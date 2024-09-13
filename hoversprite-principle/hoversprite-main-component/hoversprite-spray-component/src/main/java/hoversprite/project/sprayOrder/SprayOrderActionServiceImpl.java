@@ -3,6 +3,7 @@ package hoversprite.project.sprayOrder;
 import com.mysema.commons.lang.Pair;
 import hoversprite.project.common.domain.PersonExpertise;
 import hoversprite.project.common.domain.PersonRole;
+import hoversprite.project.notification.NotificationService;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
 import hoversprite.project.request.PersonRequest;
@@ -29,6 +30,10 @@ class SprayOrderActionServiceImpl implements SprayOrderActionService {
 
     @Autowired
     private PersonGlobalService personGlobalService;
+
+    @Autowired
+    private NotificationService notificationService;
+
     @Override
     public boolean automateSprayerSelected(SprayOrderDTO sprayOrderDTO) {
         List<Long> unAvailableSprayersId = sprayerAssignmentGlobalService.findUnAvailableSprayerIds(sprayOrderDTO);
@@ -144,8 +149,14 @@ class SprayOrderActionServiceImpl implements SprayOrderActionService {
                         .isPrimary(true).build())
                 .collect(Collectors.toList());
 
-        assignmentRequests.forEach(sprayerAssignmentRequest -> sprayerAssignmentGlobalService.save(null, sprayerAssignmentRequest, PersonRole.ADMIN));
-    }
+        assignmentRequests.forEach(sprayerAssignmentRequest -> {
+            SprayerAssignmentDTO assignment = sprayerAssignmentGlobalService.save(null, sprayerAssignmentRequest, PersonRole.ADMIN);
+
+//            // Notify the assigned sprayer
+            notificationService.notifySprayer(assignment.getSprayer(),
+                    "You have been assigned to a new spray order. Order ID: " + sprayOrderId);
+        });
+        }
 
     private void addSprayersWithNoAssignments(List<PersonDTO> selectedSprayers, List<PersonDTO> noAssignedSprayers) {
         if (noAssignedSprayers != null && !noAssignedSprayers.isEmpty()) {

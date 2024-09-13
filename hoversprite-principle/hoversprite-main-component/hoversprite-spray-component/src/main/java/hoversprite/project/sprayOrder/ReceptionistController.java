@@ -43,9 +43,37 @@ public class ReceptionistController {
         }
     }
 
+
+    @GetMapping("/farmers/{farmerId}")
+    public ResponseEntity<?> searchFarmerByUserId(@PathVariable Long farmerId) {
+        try {
+            PersonDTO farmer = personGlobalService.findFarmerById(farmerId);
+            if (farmer != null) {
+                return ResponseEntity.ok(farmer);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ErrorResponse("No farmer found with the given user ID"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An error occurred while searching for the farmer: " + e.getMessage()));
+        }
+    }
+
+
+//    @PostMapping("/orders")
+//    public SprayOrderDTO createOrder(@PathVariable Long userId, @RequestBody SprayOrderRequest sprayOrder) {
+//        return sprayOrderService.save(userId, sprayOrder, PersonRole.RECEPTIONIST);
+//    }
+
     @PostMapping("/orders")
-    public SprayOrderDTO createOrder(@PathVariable Long userId, @RequestBody SprayOrderRequest sprayOrder) {
-        return sprayOrderService.save(userId, sprayOrder, PersonRole.RECEPTIONIST);
+    public ResponseEntity<?> createOrder(@PathVariable Long userId, @RequestBody SprayOrderRequest sprayOrder) {
+        try {
+            SprayOrderDTO createdOrder = sprayOrderService.save(userId, sprayOrder, PersonRole.RECEPTIONIST);
+            return ResponseEntity.ok(createdOrder);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(e.getMessage()));
+        }
     }
 
     @PatchMapping("/orders/{orderId}/assign")

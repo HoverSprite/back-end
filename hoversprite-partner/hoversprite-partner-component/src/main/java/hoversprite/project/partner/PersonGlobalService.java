@@ -17,6 +17,7 @@ public interface PersonGlobalService {
 
     boolean isValidPhoneNumber(String phoneNumber);
     boolean isValidEmailAddress(String emailAddress);
+    PersonDTO findFarmerById(Long farmerId);
 
     List<PersonDTO> getUserByIds(List<Long> ids);
 

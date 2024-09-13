@@ -90,9 +90,8 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         if (personRole.hasRole(PersonRole.RECEPTIONIST)) {
             sprayOrder.setStatus(SprayStatus.CONFIRMED);
             sprayOrder.setReceptionist(Long.valueOf(userid));
-        } else if (personRole.hasRole(PersonRole.FARMER)) {
-            sprayOrder.setFarmer(Long.valueOf(userid));
         }
+        sprayOrder.setFarmer(sprayOrderRequest.getFarmer().getId());
         calculateCostPerArea(sprayOrder);
         sprayOrder.setLocation(sprayOrderRequest.getLocation());
 
@@ -113,7 +112,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         // Save the order
         SprayOrderDTO savedOrderDTO = SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(savedSprayOrder));
 //        sendConfirmationEmail(savedOrderDTO);
-        // Notify the farmer about the new order
+//         Notify the farmer about the new order
         if (personRole.hasRole(PersonRole.FARMER)) {
             notificationService.notifyFarmer(savedOrderDTO.getFarmer(), "Your spray order has been created successfully and is pending confirmation.");
         } else if (personRole.hasRole(PersonRole.RECEPTIONIST)) {
@@ -231,10 +230,12 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             if (newStatus == SprayStatus.CANCELLED) {
                 existingSprayOrder.setStatus(newStatus);
                 existingSprayOrder.setSpraySession(null);
-                notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been cancelled.");            }
+                notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been cancelled.");
+            }
             if (newStatus == SprayStatus.CONFIRMED) {
                 existingSprayOrder.setStatus(newStatus);
-                notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been confirmed!");            }
+                notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been confirmed!");
+            }
         }
         if (oldStatus == SprayStatus.CONFIRMED) {
             if (sprayOrder.getSprayerAssignments().isEmpty()) {
@@ -260,13 +261,15 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             sprayOrder.getSprayerAssignments().stream()
                     .map(assignmentRequest -> {
                         assignmentRequest.setSprayOrder(existingSprayOrder.getId());
-                        return sprayerAssignmentGlobalService.save(userId, assignmentRequest, personRole);
+                        SprayerAssignmentDTO assignment = sprayerAssignmentGlobalService.save(userId, assignmentRequest, personRole);
+                        // Notify the assigned sprayer
+                        notificationService.notifySprayer(assignment.getSprayer(), "You have been assigned to a new spray order. Order ID: " + existingSprayOrder.getId());
+                        return assignment;
                     })
                     .collect(Collectors.toList());
 
             existingSprayOrder.setStatus(SprayStatus.ASSIGNED);
             notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Sprayers have been assigned to your order.");
-
         }
     }
 
@@ -314,6 +317,8 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         boolean assignmentsMade = sprayOrderActionService.automateSprayerSelected(sprayOrder);
         if (assignmentsMade) {
             lockAndUnlockStatus(sprayOrder, SprayStatus.ASSIGNED);
+
+
         } else {
             lockAndUnlockStatus(sprayOrder, previousStatus);
         }
