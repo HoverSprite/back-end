@@ -182,6 +182,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             switch (personRole) {
                 case RECEPTIONIST:
                     handleReceptionistActions(userId, oldStatus, newStatus, sprayOrder, existingSprayOrder, personRole);
+                    handleSprayerActions(oldStatus, newStatus, existingSprayOrder);
                     break;
 
                 case SPRAYER:
