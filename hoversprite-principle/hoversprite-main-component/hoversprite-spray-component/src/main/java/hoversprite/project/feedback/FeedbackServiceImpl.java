@@ -2,7 +2,7 @@ package hoversprite.project.feedback;
 
 import hoversprite.project.common.domain.SprayStatus;
 import hoversprite.project.sprayOrder.SprayOrderDTO;
-import hoversprite.project.sprayOrder.SprayOrderService;
+import hoversprite.project.sprayOrder.SprayOrderGlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +18,13 @@ public class FeedbackServiceImpl implements FeedbackService {
     private FeedbackRepository feedbackRepository;
 
     @Autowired
-    private SprayOrderService sprayOrderService;
+    private SprayOrderGlobalService sprayOrderGlobalService;
 
     private FeedbackMapper feedbackMapper = FeedbackMapper.INSTANCE;
 
     @Override
     public FeedbackDTO createFeedback(FeedbackDTO feedbackDTO) {
-        SprayOrderDTO sprayOrderDTO = sprayOrderService.findById(feedbackDTO.getSprayOrderId());
+        SprayOrderDTO sprayOrderDTO = sprayOrderGlobalService.findById(feedbackDTO.getSprayOrderId());
         if (sprayOrderDTO == null) {
             throw new RuntimeException("Spray order not found with id: " + feedbackDTO.getSprayOrderId());
         }

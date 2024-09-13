@@ -12,6 +12,4 @@ interface SprayOrderService extends SprayOrderGlobalService {
     boolean automateSprayerSelected(SprayOrderDTO sprayOrderDTO);
     Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> getSortedAvailableSprayers(Long sprayOrderId);
     List<SprayOrderDTO> getOrdersBySprayer(Long sprayerId);
-
-    SprayOrderDTO findById(Long id);
 }
