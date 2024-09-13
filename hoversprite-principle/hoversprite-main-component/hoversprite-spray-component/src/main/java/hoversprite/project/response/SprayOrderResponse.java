@@ -34,4 +34,5 @@ public class SprayOrderResponse {
     private SpraySessionResponse spraySession;
     private PaymentResponse payment;
     private Boolean autoAssign;
+    private List<FeedBackReponse> feedBacks;
 }

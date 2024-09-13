@@ -1,5 +1,6 @@
-package hoversprite.project.feedback;
+package hoversprite.project.response;
 
+import hoversprite.project.request.ImageRequest;
 import lombok.*;
 
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FeedbackDTO {
+public class FeedBackReponse {
     private Long id;
     private String comment;
     private Integer overallRating;
@@ -18,4 +19,5 @@ public class FeedbackDTO {
     private Integer friendlyRating;
     private Integer professionalRating;
     private Long sprayOrder;
+    private List<ImageResponse> images;
 }

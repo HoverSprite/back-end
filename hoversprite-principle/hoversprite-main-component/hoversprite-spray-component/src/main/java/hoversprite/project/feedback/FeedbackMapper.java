@@ -1,5 +1,6 @@
 package hoversprite.project.feedback;
 
+import hoversprite.project.request.FeedbackRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -12,9 +13,9 @@ public interface FeedbackMapper {
     @Mapping(target = "submissionTime", ignore = true)
     Feedback toEntity(FeedbackDTO dto);
 
-    FeedbackDTO toDto(Feedback entity);
-
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "submissionTime", expression = "java(java.time.LocalDateTime.now())")
-    Feedback toEntitySave(FeedbackDTO dto);
+    @Mapping(target = "submissionTime", ignore = true)
+    Feedback toEntitySave(FeedbackRequest request);
+
+    FeedbackDTO toDto(Feedback entity);
 }

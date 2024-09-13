@@ -6,6 +6,7 @@ import hoversprite.project.GeocodingUtil;
 import hoversprite.project.common.base.AbstractService;
 import hoversprite.project.common.domain.*;
 import hoversprite.project.common.validator.ValidationUtils;
+import hoversprite.project.feedback.FeedbackGlobalService;
 import hoversprite.project.mapper.PersonResponseMapper;
 import hoversprite.project.mapper.SpraySessionResponseMapper;
 import hoversprite.project.partner.PersonDTO;
@@ -16,6 +17,7 @@ import hoversprite.project.request.PersonRequest;
 import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.request.SpraySessionRequest;
 import hoversprite.project.request.SprayerAssignmentRequest;
+import hoversprite.project.response.FeedBackReponse;
 import hoversprite.project.response.SprayOrderResponse;
 import hoversprite.project.response.SprayerAssignmentResponse;
 import hoversprite.project.spraySession.SpraySession2GlobalService;
@@ -25,6 +27,7 @@ import hoversprite.project.sprayerAssignment.SprayerAssignmentGlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -55,6 +58,9 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
 
     @Autowired
     private PaymentGlobalService paymentGlobalService;
+
+    @Autowired
+    private FeedbackGlobalService feedbackGlobalService;
 
     @Autowired
     private EmailService emailService;
@@ -385,6 +391,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                             .build();
                 }).collect(Collectors.toList());
 
+        List<FeedBackReponse> feedBackReponses = feedbackGlobalService.getFeedbacksBySprayOrderId(sprayOrderId);
 
         return SprayOrderResponse.builder()
                 .farmer(PersonResponseMapper.INSTANCE.toReponse(personGlobalService.findById(sprayOrderDTO.getFarmer())))
@@ -401,6 +408,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                 .spraySession(SpraySessionResponseMapper.INSTANCE.toResponse(spraySessionDTO))
                 .autoAssign(sprayOrderDTO.getAutoAssign())
                 .id(sprayOrderDTO.getId())
+                .feedBacks(CollectionUtils.isEmpty(feedBackReponses) ? null : feedBackReponses)
                 .build();
     }
 

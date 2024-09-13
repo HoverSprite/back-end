@@ -6,41 +6,39 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Entity
 @Data
-@Table(name = "ORDER_FEEDBACK")
-@Setter
+@Entity
+@Table(name = "FEEDBACK")
 @Getter
-@NoArgsConstructor
+@Setter
+@Builder
 @AllArgsConstructor
+@NoArgsConstructor
 class Feedback {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "FEEDBACK_ID")
+    private long id;
 
-    @Column(name = "spray_order_id", nullable = false)
-    private Long sprayOrderId;
+    @Column(name = "SPRAY_ORDER_ID", nullable = false)
+    private long sprayOrder;
 
-    @Column(nullable = false)
+    @Column(name = "COMMENT", nullable = false)
     private String comment;
 
-    @Column(nullable = false)
+    @Column(name = "RATE_OVERALL", nullable = false)
     private int overallRating;
 
-    @Column(nullable = false)
+    @Column(name = "RATE_ATTENTIVE", nullable = false)
     private int attentiveRating;
 
-    @Column(nullable = false)
+    @Column(name = "RATE_FRIENDLY", nullable = false)
     private int friendlyRating;
 
-    @Column(nullable = false)
+    @Column(name = "RATE_PROFESSIONAL", nullable = false)
     private int professionalRating;
 
-    @Column(nullable = false)
+    @Column(name = "DATE_TIME", nullable = false)
     private LocalDateTime submissionTime;
-
-    @ElementCollection
-    @CollectionTable(name = "feedback_images", joinColumns = @JoinColumn(name = "feedback_id"))
-    @Column(name = "image_url")
-    private List<String> imageUrls;
 }

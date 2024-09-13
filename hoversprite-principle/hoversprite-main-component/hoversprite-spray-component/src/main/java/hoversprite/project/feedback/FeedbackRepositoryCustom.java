@@ -1,4 +1,7 @@
 package hoversprite.project.feedback;
 
-public interface FeedbackRepositoryCustom {
+import java.util.List;
+
+interface FeedbackRepositoryCustom {
+    List<Feedback> getFeedbacksBySprayOrderId(Long sprayOrderId);
 }

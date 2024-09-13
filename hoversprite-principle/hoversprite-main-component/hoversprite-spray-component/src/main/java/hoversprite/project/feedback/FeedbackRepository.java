@@ -1,9 +1,9 @@
 package hoversprite.project.feedback;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
 
-public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
-    Optional<Feedback> findBySprayOrderId(Long sprayOrderId);
+@Repository
+interface FeedbackRepository extends JpaRepository<Feedback, Long>, FeedbackRepositoryCustom {
 }
