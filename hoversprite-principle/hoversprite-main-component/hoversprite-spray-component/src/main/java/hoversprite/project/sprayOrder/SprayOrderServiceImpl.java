@@ -590,7 +590,13 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                         .isPrimary(true).build())
                 .collect(Collectors.toList());
 
-        assignmentRequests.forEach(sprayerAssignmentRequest -> sprayerAssignmentGlobalService.save(null, sprayerAssignmentRequest, PersonRole.ADMIN));
+        assignmentRequests.forEach(sprayerAssignmentRequest -> {
+            SprayerAssignmentDTO assignment = sprayerAssignmentGlobalService.save(null, sprayerAssignmentRequest, PersonRole.ADMIN);
+
+            // Notify the assigned sprayer
+            notificationService.notifySprayer(assignment.getSprayer(),
+                    "You have been assigned to a new spray order. Order ID: " + sprayOrderId);
+        });
     }
 
     private void addSprayersWithNoAssignments(List<PersonDTO> selectedSprayers, List<PersonDTO> noAssignedSprayers) {
