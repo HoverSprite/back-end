@@ -1,18 +1,23 @@
 package hoversprite.project.sprayOrder;
 
 import hoversprite.project.common.ErrorResponse;
+import com.mysema.commons.lang.Pair;
+import hoversprite.project.common.domain.PersonExpertise;
 import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
+import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentDTO;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentGlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user/{userId}/receptionist")
@@ -84,6 +89,11 @@ public class ReceptionistController {
     @PutMapping("/orders/{orderId}")
     public SprayOrderDTO updateOrder(@PathVariable Long userId, @PathVariable Long orderId, @RequestBody SprayOrderRequest sprayOrder) {
         return sprayOrderService.update(userId, orderId, sprayOrder, PersonRole.RECEPTIONIST);
+    }
+    @GetMapping("/orders/{orderId}/available-sprayers")
+    public ResponseEntity<Map<PersonExpertise, List<Pair<PersonDTO, Integer>>>> getSortedSprayers(@PathVariable Long orderId) {
+        Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> sortedSprayers = sprayOrderService.getSortedAvailableSprayers(orderId);
+        return ResponseEntity.ok(sortedSprayers);
     }
 
     @GetMapping("/orders")

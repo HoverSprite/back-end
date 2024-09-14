@@ -5,6 +5,7 @@ import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
 import hoversprite.project.request.SprayOrderRequest;
+import hoversprite.project.response.SprayOrderResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,8 +58,8 @@ public class FarmerController {
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<?> viewOrder(@PathVariable Long userId, @PathVariable Long orderId) {
         try {
-            SprayOrderDTO order = sprayOrderService.findById(orderId);
-            return ResponseEntity.ok(order);
+            return new ResponseEntity<>(sprayOrderService.findSprayOrderDetails(orderId), HttpStatus.OK);
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getMessage()));
         }

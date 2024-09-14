@@ -83,6 +83,11 @@ class PersonServiceImpl implements PersonService {
     }
 
     @Override
+    public PersonDTO findById(Long id) {
+        return PersonMapper.INSTANCE.toDto(personRepository.findById(id).orElse(null));
+    }
+
+    @Override
     public Map<PersonExpertise, List<PersonDTO>> getSprayersGroupedByExpertise(List<Long> excludedIds) {
         List<PersonDTO> personDTOS = personRepository.getSprayersThatNotExcluded(excludedIds)
                 .stream().map(PersonMapper.INSTANCE::toDto).collect(Collectors.toList());

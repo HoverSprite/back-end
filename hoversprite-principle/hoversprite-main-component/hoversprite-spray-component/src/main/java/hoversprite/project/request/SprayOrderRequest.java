@@ -33,4 +33,5 @@ public class SprayOrderRequest {
     private List<SprayerAssignmentRequest> sprayerAssignments;
     private SpraySessionRequest spraySession;
     private PaymentRequest payment;
+    private Boolean autoAssign;
 }

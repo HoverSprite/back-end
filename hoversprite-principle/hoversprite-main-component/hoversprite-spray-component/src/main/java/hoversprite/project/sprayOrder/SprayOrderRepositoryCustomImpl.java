@@ -31,7 +31,9 @@ class SprayOrderRepositoryCustomImpl implements SprayOrderRepositoryCustom {
     public List<SprayOrder> getUnAssignedSprayOrders() {
         return new JPAQuery<SprayOrder>(em)
                 .from(QSprayOrder.sprayOrder)
-                .where(QSprayOrder.sprayOrder.status.eq(SprayStatus.CONFIRMED))
+                .where(QSprayOrder.sprayOrder.status.eq(SprayStatus.CONFIRMED)
+
+                        .and(QSprayOrder.sprayOrder.autoAssign.eq(true)))
                 .fetch();
     }
 

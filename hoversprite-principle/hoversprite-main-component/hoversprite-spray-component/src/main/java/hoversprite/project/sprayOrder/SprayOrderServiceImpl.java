@@ -1,17 +1,26 @@
 package hoversprite.project.sprayOrder;
 
+import com.mysema.commons.lang.Pair;
 import hoversprite.project.EmailService;
 import hoversprite.project.GeocodingUtil;
 import hoversprite.project.notification.NotificationService;
 import hoversprite.project.common.base.AbstractService;
 import hoversprite.project.common.domain.*;
 import hoversprite.project.common.validator.ValidationUtils;
+import hoversprite.project.feedback.FeedbackGlobalService;
+import hoversprite.project.mapper.PersonResponseMapper;
+import hoversprite.project.mapper.SpraySessionResponseMapper;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
 import hoversprite.project.payment.PaymentGlobalService;
 import hoversprite.project.payment.request.PaymentRequest;
+import hoversprite.project.request.PersonRequest;
 import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.request.SpraySessionRequest;
+import hoversprite.project.request.SprayerAssignmentRequest;
+import hoversprite.project.response.FeedBackReponse;
+import hoversprite.project.response.SprayOrderResponse;
+import hoversprite.project.response.SprayerAssignmentResponse;
 import hoversprite.project.spraySession.SpraySession2GlobalService;
 import hoversprite.project.spraySession.SpraySessionDTO;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentDTO;
@@ -19,10 +28,11 @@ import hoversprite.project.sprayerAssignment.SprayerAssignmentGlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 
@@ -47,10 +57,10 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     private SprayerAssignmentGlobalService sprayerAssignmentGlobalService;
 
     @Autowired
-    private SprayOrderActionService sprayOrderActionService;
+    private PaymentGlobalService paymentGlobalService;
 
     @Autowired
-    private PaymentGlobalService paymentGlobalService;
+    private FeedbackGlobalService feedbackGlobalService;
 
     @Autowired
     private EmailService emailService;
@@ -125,13 +135,13 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     @Override
     protected void validateForUpdate(ValidationUtils validator, SprayOrderRequest sprayOrder, PersonRole personRole) {
         switch (personRole) {
-            case RECEPTIONIST:
-                if (sprayOrder.getStatus() != null) {
-                    validator.isTrue(
-                            (sprayOrder.getStatus() == SprayStatus.CANCELLED || sprayOrder.getStatus() == SprayStatus.PENDING ||
-                                    sprayOrder.getStatus() == SprayStatus.CONFIRMED), "The receptionist user is only allowed to create, cancel or confirm the order.");
-                }
-                break;
+//            case RECEPTIONIST:
+//                if (sprayOrder.getStatus() != null) {
+//                    validator.isTrue(
+//                            (sprayOrder.getStatus() == SprayStatus.CANCELLED || sprayOrder.getStatus() == SprayStatus.PENDING ||
+//                                    sprayOrder.getStatus() == SprayStatus.CONFIRMED), "The receptionist user is only allowed to create, cancel or confirm the order.");
+//                }
+//                break;
             case SPRAYER:
                 if (sprayOrder.getStatus() != null) {
                     validator.isTrue(
@@ -180,6 +190,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             switch (personRole) {
                 case RECEPTIONIST:
                     handleReceptionistActions(userId, oldStatus, newStatus, sprayOrder, existingSprayOrder, personRole);
+                    handleSprayerActions(oldStatus, newStatus, existingSprayOrder);
                     break;
 
                 case SPRAYER:
@@ -192,7 +203,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         }
 
         // Handle payment and order completion
-        if (oldStatus == SprayStatus.SPRAY_COMPLETED && personRole.hasRole(PersonRole.SPRAYER)) {
+        if (oldStatus == SprayStatus.SPRAY_COMPLETED && (personRole.hasRole(PersonRole.SPRAYER) || personRole.hasRole(PersonRole.RECEPTIONIST))) {
             BigDecimal paymentReceivedAmount = sprayOrder.getPaymentReceivedAmount();
             if (paymentReceivedAmount == null || paymentReceivedAmount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new RuntimeException("Invalid payment amount. Payment must be greater than zero.");
@@ -226,9 +237,13 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     }
 
     private void handleReceptionistActions(Long userId, SprayStatus oldStatus, SprayStatus newStatus, SprayOrderRequest sprayOrder, SprayOrder existingSprayOrder, PersonRole personRole) {
+        if (sprayOrder.getAutoAssign() != null) {
+            existingSprayOrder.setAutoAssign(sprayOrder.getAutoAssign());
+        }
         if (oldStatus == SprayStatus.PENDING) {
             if (newStatus == SprayStatus.CANCELLED) {
                 existingSprayOrder.setStatus(newStatus);
+                spraySession2GlobalService.deleteById(existingSprayOrder.getSpraySession());
                 existingSprayOrder.setSpraySession(null);
                 notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been cancelled.");
             }
@@ -237,9 +252,51 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                 notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been confirmed!");
             }
         }
+        handleConfirmed(oldStatus, sprayOrder, existingSprayOrder, userId, personRole);
+        handleAssigned(oldStatus, sprayOrder, existingSprayOrder, userId, personRole);
+    }
+
+    private void handleAssigned(SprayStatus oldStatus, SprayOrderRequest sprayOrder, SprayOrder existingSprayOrder, Long userId, PersonRole personRole) {
+        if (oldStatus == SprayStatus.ASSIGNED) {
+            Long sprayOrderId = existingSprayOrder.getId();
+
+            List<SprayerAssignmentDTO> existingAssignments = sprayerAssignmentGlobalService
+                    .findAllBySprayOrderIds(Collections.singletonList(sprayOrderId));
+
+            List<Long> existingSprayerIds = existingAssignments.stream()
+                    .map(SprayerAssignmentDTO::getSprayer)
+                    .collect(Collectors.toList());
+
+            if (sprayOrder.getSprayerAssignments().isEmpty()) {
+                sprayerAssignmentGlobalService.deleteAllByIds(existingAssignments.stream().map(SprayerAssignmentDTO::getId).collect(Collectors.toList()));
+                existingSprayOrder.setStatus(SprayStatus.CONFIRMED);
+                return;
+            }
+
+            for (SprayerAssignmentRequest currentAssignment : sprayOrder.getSprayerAssignments()) {
+                Long currentSprayerId = currentAssignment.getSprayer().getId();
+
+                if (!existingSprayerIds.contains(currentSprayerId)) {
+                    currentAssignment.setSprayOrder(sprayOrderId);
+                    sprayerAssignmentGlobalService.save(userId, currentAssignment, personRole);
+                }
+            }
+
+            for (SprayerAssignmentDTO existingAssignment : existingAssignments) {
+                boolean isInNewAssignments = sprayOrder.getSprayerAssignments().stream()
+                        .anyMatch(newAssignment -> Objects.equals(newAssignment.getSprayer().getId(), existingAssignment.getSprayer()));
+
+                if (!isInNewAssignments) {
+                    sprayerAssignmentGlobalService.deleteById(existingAssignment.getId());
+                }
+            }
+        }
+    }
+
+    private void handleConfirmed(SprayStatus oldStatus, SprayOrderRequest sprayOrder, SprayOrder existingSprayOrder, Long userId, PersonRole personRole) {
         if (oldStatus == SprayStatus.CONFIRMED) {
             if (sprayOrder.getSprayerAssignments().isEmpty()) {
-                throw new RuntimeException("No SPRAYERs assigned. Cannot set the status to ASSIGNED.");
+                return;
             }
 
             List<Long> sprayerIds = sprayOrder.getSprayerAssignments()
@@ -313,8 +370,44 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     }
 
     @Override
+    public SprayOrderResponse findSprayOrderDetails(Long sprayOrderId) {
+        SprayOrderDTO sprayOrderDTO = findById(sprayOrderId);
+        SpraySessionDTO spraySessionDTO = spraySession2GlobalService.findById(sprayOrderDTO.getSpraySession());
+        List<SprayerAssignmentDTO> sprayerAssignmentDTOS = sprayerAssignmentGlobalService.findAllBySprayOrderIds(Collections.singletonList(sprayOrderId));
+
+        List<SprayerAssignmentResponse> sprayerAssignmentResponses = sprayerAssignmentDTOS.stream()
+                .map(sprayerAssignmentDTO -> {
+                    return SprayerAssignmentResponse.builder()
+                            .id(sprayerAssignmentDTO.getId())
+                            .isPrimary(sprayerAssignmentDTO.getIsPrimary())
+                            .sprayer(PersonResponseMapper.INSTANCE.toReponse(personGlobalService.findById(sprayerAssignmentDTO.getSprayer())))
+                            .build();
+                }).collect(Collectors.toList());
+
+        List<FeedBackReponse> feedBackReponses = feedbackGlobalService.getFeedbacksBySprayOrderId(sprayOrderId);
+
+        return SprayOrderResponse.builder()
+                .farmer(PersonResponseMapper.INSTANCE.toReponse(personGlobalService.findById(sprayOrderDTO.getFarmer())))
+                .cropType(sprayOrderDTO.getCropType())
+                .area(sprayOrderDTO.getArea())
+                .cost(sprayOrderDTO.getCost())
+                .dateTime(sprayOrderDTO.getDateTime())
+                .latitude(sprayOrderDTO.getLatitude())
+                .location(sprayOrderDTO.getLocation())
+                .longitude(sprayOrderDTO.getLongitude())
+                .sprayerAssignments(sprayerAssignmentResponses)
+                .changeAmount(sprayOrderDTO.getChangeAmount())
+                .status(sprayOrderDTO.getStatus())
+                .spraySession(SpraySessionResponseMapper.INSTANCE.toResponse(spraySessionDTO))
+                .autoAssign(sprayOrderDTO.getAutoAssign())
+                .id(sprayOrderDTO.getId())
+                .feedBacks(CollectionUtils.isEmpty(feedBackReponses) ? null : feedBackReponses)
+                .build();
+    }
+
+    @Override
     public void automateSprayerSelection(SprayOrderDTO sprayOrder, SprayStatus previousStatus) {
-        boolean assignmentsMade = sprayOrderActionService.automateSprayerSelected(sprayOrder);
+        boolean assignmentsMade = automateSprayerSelected(sprayOrder);
         if (assignmentsMade) {
             lockAndUnlockStatus(sprayOrder, SprayStatus.ASSIGNED);
 
@@ -373,5 +466,145 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         // Implement the conversion from Gregorian to Lunar date here
         // This is a placeholder and should be replaced with actual conversion logic
         return "DD/MM/YYYY";
+    }
+
+    @Override
+    public Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> getSortedAvailableSprayers(Long sprayOrderId) {
+        SprayOrderDTO sprayOrderDTO = findById(sprayOrderId);
+        List<Long> unAvailableSprayersId = sprayerAssignmentGlobalService.findUnAvailableSprayerIds(sprayOrderDTO);
+        Map<PersonExpertise, List<PersonDTO>> availableSprayers = personGlobalService.getSprayersGroupedByExpertise(unAvailableSprayersId);
+
+        SpraySessionDTO session = spraySession2GlobalService.findById(sprayOrderDTO.getSpraySession());
+        List<SpraySessionDTO> spraySessionByWeek = spraySession2GlobalService.findSpraySessionByWeek(session.getDate());
+        List<Long> sprayOrderIdsByWeek = spraySessionByWeek.stream().map(SpraySessionDTO::getSprayOrder).collect(Collectors.toList());
+
+        Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> sortedAvailableSprayers = new HashMap<>();
+
+        for (Map.Entry<PersonExpertise, List<PersonDTO>> entry : availableSprayers.entrySet()) {
+            PersonExpertise expertise = entry.getKey();
+            List<PersonDTO> personDTOs = entry.getValue();
+
+            List<Pair<PersonDTO, Integer>> personWithAssignmentCount = new ArrayList<>();
+
+            for (PersonDTO personDTO : personDTOs) {
+                List<SprayerAssignmentDTO> assignments = sprayerAssignmentGlobalService.findSprayerAssignmentInTheWeek(sprayOrderIdsByWeek, Collections.singletonList(personDTO.getId()));
+                int assignmentCount = assignments.size();
+                personWithAssignmentCount.add(new Pair<>(personDTO, assignmentCount));
+            }
+
+            List<Pair<PersonDTO, Integer>> sortedPersonWithAssignmentCount = personWithAssignmentCount.stream()
+                    .sorted(Comparator.comparingInt(Pair::getSecond))
+                    .collect(Collectors.toList());
+
+            sortedAvailableSprayers.put(expertise, sortedPersonWithAssignmentCount);
+        }
+
+        return sortedAvailableSprayers;
+    }
+
+    @Override
+    public boolean automateSprayerSelected(SprayOrderDTO sprayOrderDTO) {
+        Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> sortedAvailableSprayers = getSortedAvailableSprayers(sprayOrderDTO.getId());
+
+        List<PersonDTO> selectedSprayers = new ArrayList<>();
+        List<PersonDTO> noAssignmentsSprayersApprentice = getFilteredSprayers(sortedAvailableSprayers, PersonExpertise.APPRENTICE, false);
+        List<PersonDTO> someAssignmentsSprayersApprentice = getFilteredSprayers(sortedAvailableSprayers, PersonExpertise.APPRENTICE, true);
+        List<PersonDTO> noAssignmentsSprayersAdept = getFilteredSprayers(sortedAvailableSprayers, PersonExpertise.ADEPT, false);
+        List<PersonDTO> someAssignmentsSprayersAdept = getFilteredSprayers(sortedAvailableSprayers, PersonExpertise.ADEPT, true);
+        List<PersonDTO> noAssignmentsSprayersExpert = getFilteredSprayers(sortedAvailableSprayers, PersonExpertise.EXPERT, false);
+        List<PersonDTO> someAssignmentsSprayersExpert = getFilteredSprayers(sortedAvailableSprayers, PersonExpertise.EXPERT, true);
+
+
+        // START ANALYZING
+        addMultipleListToSelectedSprayer(selectedSprayers, noAssignmentsSprayersApprentice,
+                noAssignmentsSprayersAdept, noAssignmentsSprayersExpert);
+
+        if (selectedSprayers.size() > 1) {
+            handleSprayerSelection(selectedSprayers, sprayOrderDTO);
+            return true;
+        }
+
+        if (selectedSprayers.size() == 1) {
+            if (selectedSprayers.get(0).getExpertise() == PersonExpertise.APPRENTICE) {
+                addSprayersWithNoAssignments(selectedSprayers, someAssignmentsSprayersAdept);
+                addSprayersWithNoAssignments(selectedSprayers, someAssignmentsSprayersExpert);
+                if (selectedSprayers.size() > 1) {
+                    handleSprayerSelection(selectedSprayers, sprayOrderDTO);
+                    return true;
+                }
+            }
+            if (Arrays.asList(PersonExpertise.ADEPT, PersonExpertise.EXPERT).contains(selectedSprayers.get(0).getExpertise())) {
+                if (selectedSprayers.get(0).getExpertise() == PersonExpertise.EXPERT) {
+                    handleSprayerSelection(selectedSprayers, sprayOrderDTO);
+                    return true;
+                }
+                addMultipleListToSelectedSprayer(selectedSprayers, someAssignmentsSprayersApprentice,
+                        someAssignmentsSprayersAdept, someAssignmentsSprayersExpert);
+                if (selectedSprayers.size() > 1) {
+                    handleSprayerSelection(selectedSprayers, sprayOrderDTO);
+                    return true;
+                }
+            }
+        }
+
+        if (selectedSprayers.isEmpty()) {
+            addMultipleListToSelectedSprayer(selectedSprayers, someAssignmentsSprayersApprentice,
+                    someAssignmentsSprayersAdept, someAssignmentsSprayersExpert);
+
+            if (selectedSprayers.size() > 1) {
+                handleSprayerSelection(selectedSprayers, sprayOrderDTO);
+                return true;
+            }
+            if (selectedSprayers.size() == 1 && selectedSprayers.get(0).getExpertise() == PersonExpertise.EXPERT) {
+                handleSprayerSelection(selectedSprayers, sprayOrderDTO);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @SafeVarargs
+    private void addMultipleListToSelectedSprayer(List<PersonDTO> selectedSprayers, List<PersonDTO>... multipleList) {
+        for (List<PersonDTO> list : multipleList) {
+            addSprayersWithNoAssignments(selectedSprayers, list);
+        }
+    }
+
+    private List<PersonDTO> limitToTwoSprayers(List<PersonDTO> sprayers) {
+        return sprayers.size() > 2 ? sprayers.subList(0, 2) : sprayers;
+    }
+
+    // Method to add sprayers based on specific conditions and create assignments
+    private void handleSprayerSelection(List<PersonDTO> selectedSprayers, SprayOrderDTO sprayOrderDTO) {
+        selectedSprayers = limitToTwoSprayers(selectedSprayers);
+        createAssigments(selectedSprayers, sprayOrderDTO.getId());
+    }
+
+
+    private void createAssigments(List<PersonDTO> selectedSprayers, Long sprayOrderId) {
+        List<SprayerAssignmentRequest> assignmentRequests = selectedSprayers.stream()
+                .map(selectedSprayer -> SprayerAssignmentRequest.builder()
+                        .sprayOrder(sprayOrderId)
+                        .sprayer(PersonRequest.builder().id(selectedSprayer.getId()).build())
+                        .isPrimary(true).build())
+                .collect(Collectors.toList());
+
+        assignmentRequests.forEach(sprayerAssignmentRequest -> sprayerAssignmentGlobalService.save(null, sprayerAssignmentRequest, PersonRole.ADMIN));
+    }
+
+    private void addSprayersWithNoAssignments(List<PersonDTO> selectedSprayers, List<PersonDTO> noAssignedSprayers) {
+        if (noAssignedSprayers != null && !noAssignedSprayers.isEmpty()) {
+            selectedSprayers.add(noAssignedSprayers.get(0));
+        }
+    }
+
+    private List<PersonDTO> getFilteredSprayers(Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> sortedAvailableSprayers, PersonExpertise expertise, boolean biggerThan0) {
+        List<Pair<PersonDTO, Integer>> sprayers = sortedAvailableSprayers.get(expertise);
+        if (sprayers == null) return Collections.emptyList();
+        return sprayers.stream()
+                .filter(pair -> biggerThan0 ? pair.getSecond() > 0 : pair.getSecond() == 0)
+                .map(Pair::getFirst)
+                .collect(Collectors.toList());
     }
 }

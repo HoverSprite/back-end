@@ -29,4 +29,5 @@ public class SprayOrderDTO {
     private Double latitude;
     private Double longitude;
     private Long spraySession;
+    private Boolean autoAssign;
 }

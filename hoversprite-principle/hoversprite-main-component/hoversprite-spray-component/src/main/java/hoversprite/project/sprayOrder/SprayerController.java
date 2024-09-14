@@ -56,5 +56,4 @@ public class SprayerController {
                 .filter(order -> order.getLatitude() != null && order.getLongitude() != null)
                 .collect(Collectors.toList());
     }
-
 }

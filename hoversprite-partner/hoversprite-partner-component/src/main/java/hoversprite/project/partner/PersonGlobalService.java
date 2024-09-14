@@ -21,6 +21,8 @@ public interface PersonGlobalService {
 
     List<PersonDTO> getUserByIds(List<Long> ids);
 
+    PersonDTO findById(Long id);
+
     Map<PersonExpertise, List<PersonDTO>> getSprayersGroupedByExpertise(List<Long> excludedIds);
 
     PersonDTO findFarmerByPhoneNumber(String phoneNumber);
