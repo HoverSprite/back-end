@@ -28,13 +28,4 @@ public class ApplicationBackendConfig extends SpringBootServletInitializer {
 //    public void addInterceptors(InterceptorRegistry registry) {
 //        registry.addInterceptor(new LogHandlerInterceptor());
 //    }
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOriginPatterns("*")  // Change this to your frontend URL
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
 }
