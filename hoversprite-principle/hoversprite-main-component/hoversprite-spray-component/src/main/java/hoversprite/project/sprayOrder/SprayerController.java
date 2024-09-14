@@ -15,12 +15,6 @@ public class SprayerController {
     @Autowired
     private SprayOrderService sprayOrderService;
 
-//    @Autowired
-//    private RoutePlanningService routePlanningService;
-//
-//    @Autowired
-//    private GeocodingUtil geocodingUtil;
-
     @GetMapping("/orders")
     public List<SprayOrderDTO> viewAssignedOrders(@PathVariable Long userId) {
         return sprayOrderService.getOrdersBySprayer(userId);

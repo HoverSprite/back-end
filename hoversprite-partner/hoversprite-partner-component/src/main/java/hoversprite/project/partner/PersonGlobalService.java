@@ -4,6 +4,7 @@ import hoversprite.project.common.domain.PersonExpertise;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface PersonGlobalService {
 
@@ -26,4 +27,5 @@ public interface PersonGlobalService {
     Map<PersonExpertise, List<PersonDTO>> getSprayersGroupedByExpertise(List<Long> excludedIds);
 
     PersonDTO findFarmerByPhoneNumber(String phoneNumber);
+    Optional<PersonDTO> findByEmailAddress(String username);
 }

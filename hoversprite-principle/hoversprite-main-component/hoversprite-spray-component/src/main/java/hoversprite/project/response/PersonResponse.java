@@ -13,9 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PersonResponse {
     private Long id;
-    private String lastName;
-    private String middleName;
-    private String firstName;
+    private String fullName;
     private String phoneNumber;
     private String homeAddress;
     private String emailAddress;

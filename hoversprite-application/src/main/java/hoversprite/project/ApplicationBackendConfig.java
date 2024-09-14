@@ -13,7 +13,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @SpringBootApplication(scanBasePackages = "hoversprite.project")
 @PropertySource({"classpath:/application.properties"})
 @EnableScheduling
-public class ApplicationBackendConfig extends SpringBootServletInitializer implements WebMvcConfigurer {
+public class ApplicationBackendConfig extends SpringBootServletInitializer {
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
         return builder.sources(ApplicationBackendConfig.class);
