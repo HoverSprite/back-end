@@ -20,14 +20,8 @@ class Person {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "LAST_NAME")
-    private String lastName;
-
-    @Column(name = "MIDDLE_NAME")
-    private String middleName;
-
-    @Column(name = "FIRST_NAME")
-    private String firstName;
+    @Column(name = "FULL_NAME")
+    private String fullName;
 
     @Column(name = "PHONE_NUMBER")
     private String phoneNumber;
@@ -59,11 +53,6 @@ class Person {
         if (this.profilePictureUrl == null || this.profilePictureUrl.isEmpty()) {
             this.profilePictureUrl = getDefaultAvatarUrlForRole(this.role);
         }
-    }
-
-    // Set password with hashing
-    public void setPassword(String password) {
-        this.passwordHash = Integer.toString(password.hashCode());
     }
 
     private String getDefaultAvatarUrlForRole(PersonRole role) {

@@ -36,4 +36,13 @@ class PersonRepositoryCustomImpl implements PersonRepositoryCustom {
                 .fetch();
     }
 
+    @Override
+    public boolean existsByEmail(String emailAddress) {
+        Person person = new JPAQuery<Person>(em)
+                .from(QPerson.person)
+                .where(QPerson.person.emailAddress.like(emailAddress))
+                .fetchFirst();
+        return person != null;
+    }
+
 }

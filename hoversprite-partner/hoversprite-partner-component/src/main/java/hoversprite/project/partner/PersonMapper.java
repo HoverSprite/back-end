@@ -1,5 +1,7 @@
 package hoversprite.project.partner;
 
+import hoversprite.project.common.domain.PersonAuthor;
+import hoversprite.project.request.PersonRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -7,6 +9,8 @@ import org.mapstruct.factory.Mappers;
 interface PersonMapper {
     PersonMapper INSTANCE = Mappers.getMapper(PersonMapper.class);
 
-    Person toEntity(PersonDTO dto);
+    Person toEntity(PersonRequest request);
     PersonDTO toDto(Person entity);
+
+    PersonAuthor toAuthor(PersonDTO personDTO);
 }

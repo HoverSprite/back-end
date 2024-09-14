@@ -10,12 +10,11 @@ import lombok.*;
 @NoArgsConstructor
 public class PersonDTO {
     private Long id;
-    private String lastName;
-    private String middleName;
-    private String firstName;
+    private String fullName;
     private String phoneNumber;
     private String homeAddress;
     private String emailAddress;
+    private String passwordHash;
     private PersonRole role;
     private PersonExpertise expertise;
     private String profilePictureUrl;

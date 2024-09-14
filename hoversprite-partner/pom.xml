@@ -13,7 +13,6 @@
     <name>hoversprite-partner</name>
     <url>http://maven.apache.org</url>
     <modules>
-        <module>hoversprite-partner-auth</module>
         <module>hoversprite-partner-component</module>
     </modules>
 
@@ -23,11 +22,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hoversprite-partner-auth</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>hoversprite-partner-component</artifactId>

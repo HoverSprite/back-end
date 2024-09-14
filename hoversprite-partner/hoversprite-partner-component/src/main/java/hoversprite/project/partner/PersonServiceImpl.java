@@ -1,7 +1,9 @@
 package hoversprite.project.partner;
 
 import hoversprite.project.common.domain.PersonExpertise;
+import hoversprite.project.request.PersonRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -14,17 +16,30 @@ import java.util.stream.Collectors;
 @Service
 class PersonServiceImpl implements PersonService {
 
-    @Autowired
-    private PersonRepository personRepository;
+    private final PersonRepository personRepository;
 
+    public PersonServiceImpl(PersonRepository personRepository) {
+        this.personRepository = personRepository;
+    }
     @Override
     public List<PersonDTO> getPersonList() {
         return personRepository.findAll().stream().map(PersonMapper.INSTANCE::toDto).collect(Collectors.toList());
     }
 
     @Override
-    public void addPerson(PersonDTO person) {
-        PersonMapper.INSTANCE.toDto(personRepository.save(PersonMapper.INSTANCE.toEntity(person)));
+    public PersonDTO addPerson(PersonRequest person) {
+        Person personToSave = PersonMapper.INSTANCE.toEntity(person);
+        return PersonMapper.INSTANCE.toDto(personRepository.save(personToSave));
+    }
+
+    @Override
+    public Optional<PersonDTO> loadUserByUsername(String username) {
+        return personRepository.findByEmailAddress(username).map(PersonMapper.INSTANCE::toDto);
+    }
+
+    @Override
+    public boolean existsByEmail(String emailAddress) {
+        return personRepository.existsByEmail(emailAddress);
     }
 
     @Override
@@ -76,6 +91,11 @@ class PersonServiceImpl implements PersonService {
 
         return personDTOS.stream()
                 .collect(Collectors.groupingBy(PersonDTO::getExpertise));
+    }
+
+    @Override
+    public Optional<PersonDTO> findByEmailAddress(String username) {
+        return loadUserByUsername(username);
     }
 
 

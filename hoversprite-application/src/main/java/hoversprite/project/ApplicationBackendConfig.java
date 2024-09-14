@@ -13,7 +13,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @SpringBootApplication(scanBasePackages = "hoversprite.project")
 @PropertySource({"classpath:/application.properties"})
 @EnableScheduling
-public class ApplicationBackendConfig extends SpringBootServletInitializer implements WebMvcConfigurer {
+public class ApplicationBackendConfig extends SpringBootServletInitializer {
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
         return builder.sources(ApplicationBackendConfig.class);
@@ -28,13 +28,4 @@ public class ApplicationBackendConfig extends SpringBootServletInitializer imple
 //    public void addInterceptors(InterceptorRegistry registry) {
 //        registry.addInterceptor(new LogHandlerInterceptor());
 //    }
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins("*")  // Change this to your frontend URL
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
 }
