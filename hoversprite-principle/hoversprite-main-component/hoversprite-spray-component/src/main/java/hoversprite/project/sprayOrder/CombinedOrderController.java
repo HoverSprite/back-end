@@ -35,7 +35,6 @@ public class CombinedOrderController {
     }
 
 
-
     @GetMapping("/farmer")
     @PreAuthorize("hasRole('FARMER')")
     public List<SprayOrderDTO> viewFarmerOrders() {

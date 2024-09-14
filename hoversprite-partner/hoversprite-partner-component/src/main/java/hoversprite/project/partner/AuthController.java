@@ -4,9 +4,13 @@ package hoversprite.project.partner;
 import hoversprite.project.jwt.*;
 import hoversprite.project.request.PersonRequest;
 import hoversprite.project.response.EmailValidationResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +25,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
+    @Value("${jwt.refresh-expiration}")
+    private int refreshTokenDuration;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -60,7 +67,7 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> signin(@RequestBody AuthenticationRequest authenticationRequest) {
+    public ResponseEntity<?> signin(@RequestBody AuthenticationRequest authenticationRequest, HttpServletResponse response) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
@@ -70,9 +77,18 @@ public class AuthController {
         }
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-        final String jwt = jwtUtil.generateToken(userDetails);
 
-        return ResponseEntity.ok(new AuthenticationResponse(jwt));
+        final String accessToken = jwtUtil.generateToken(userDetails);
+        final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+
+        // Set refresh token as HttpOnly cookie
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true); // if using HTTPS
+        cookie.setPath("/");
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(new AuthenticationResponse(accessToken));
     }
 
     @PostMapping("/verify")
@@ -88,15 +104,45 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {
-        String username = jwtUtil.extractUsername(request.getToken());
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        // Get refresh token from cookie
+        Cookie[] cookies = request.getCookies();
+        String refreshToken = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("refreshToken")) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
 
-        if (jwtUtil.validateToken(request.getToken(), userDetails)) {
-            String newToken = jwtUtil.generateToken(userDetails);
-            return ResponseEntity.ok(new AuthenticationResponse(newToken));
-        } else {
-            return ResponseEntity.badRequest().body("Invalid token");
+        if (refreshToken == null) {
+            return ResponseEntity.badRequest().body("Refresh token is missing");
+        }
+
+        try {
+            String username = jwtUtil.extractUsername(refreshToken);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if (jwtUtil.validateToken(refreshToken, userDetails)) {
+                String newAccessToken = jwtUtil.generateToken(userDetails);
+                String newRefreshToken = jwtUtil.generateRefreshToken(userDetails);
+
+                // Set new refresh token as HttpOnly cookie
+                Cookie newCookie = new Cookie("refreshToken", newRefreshToken);
+                newCookie.setHttpOnly(true);
+                newCookie.setSecure(true);
+                newCookie.setPath("/");
+                newCookie.setMaxAge(refreshTokenDuration);
+                response.addCookie(newCookie);
+
+                return ResponseEntity.ok(new AuthenticationResponse(newAccessToken));
+            } else {
+                return ResponseEntity.badRequest().body("Invalid refresh token");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error processing refresh token");
         }
     }
 

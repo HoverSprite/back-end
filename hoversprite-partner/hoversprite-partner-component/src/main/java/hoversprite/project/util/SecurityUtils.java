@@ -1,10 +1,14 @@
 package hoversprite.project.util;
 
 import hoversprite.project.common.domain.PersonRole;
+import hoversprite.project.jwt.CustomUserDetails;
+import hoversprite.project.jwt.CustomUserDetailsService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 @Component
 public class SecurityUtils {
@@ -24,11 +28,11 @@ public class SecurityUtils {
             throw new IllegalStateException("User is not authenticated");
         }
 
-        Object details = authentication.getDetails();
-        if (details instanceof Long) {
-            return (Long) details;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomUserDetails) {
+            return ((CustomUserDetails) principal).getUserId();
         }
 
-        throw new IllegalStateException("User ID not found in Authentication details");
+        throw new IllegalStateException("User ID not found in Authentication principal");
     }
 }
