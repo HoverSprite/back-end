@@ -1,14 +1,17 @@
 package hoversprite.project.onetimecode;
 
 
+import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.onetimecode.request.OTCRequest;
 import hoversprite.project.qrcode.QRCodeGlobalService;
+import hoversprite.project.util.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.google.zxing.WriterException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -16,7 +19,7 @@ import java.io.IOException;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/user/{userId}/otp")
+@RequestMapping("/otp")
 class OneTimeCodeController {
 
     @Autowired
@@ -35,8 +38,11 @@ class OneTimeCodeController {
     }
 
     @PostMapping("/verify/{orderId}")
-    public ResponseEntity<String> verifyOtp(@PathVariable Long userId, @PathVariable Long orderId, @RequestBody OTCRequest otp) {
-        if (oneTimeCodeService.verifyOtp(userId, orderId, otp)) {
+    @PreAuthorize("hasAnyRole('FARMER')")
+    public ResponseEntity<String> verifyOtp(@PathVariable Long orderId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        if (oneTimeCodeService.verifyOtp(userId, orderId)) {
             return ResponseEntity.ok("OTP verified successfully");
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid One Time Code");
@@ -44,7 +50,8 @@ class OneTimeCodeController {
     }
 
     @GetMapping("/qr/{orderId}")
-    public ResponseEntity<byte[]> generateQRCode(@PathVariable Long userId, @PathVariable Long orderId, @RequestParam String content) {
+    @PreAuthorize("hasAnyRole('SPRAYER')")
+    public ResponseEntity<byte[]> generateQRCode(@PathVariable Long orderId, @RequestParam String content) {
         try {
             byte[] qrCodeImage = qrCodeGlobalService.generateQRCode(content);
 

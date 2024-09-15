@@ -5,5 +5,5 @@ import hoversprite.project.onetimecode.request.OTCRequest;
 public interface OneTimeCodeGlobalService {
     String createOtp(Long userId);
 
-    boolean verifyOtp(Long userId, Long sprayOrderId, OTCRequest otp);
+    boolean verifyOtp(Long userId, Long sprayOrderId);
 }

@@ -160,7 +160,6 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         SprayStatus oldStatus = existingSprayOrder.getStatus();
 
 
-
         if ((personRole.hasRole(PersonRole.FARMER) || personRole.hasRole(PersonRole.RECEPTIONIST)) &&
                 (oldStatus == SprayStatus.PENDING || oldStatus == null) && (newStatus == SprayStatus.PENDING)) {
             existingSprayOrder.setCropType(sprayOrder.getCropType());
@@ -198,12 +197,12 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                     break;
 
                 default:
-                    throw new RuntimeException("Unsupported role: " + personRole);
+                    break;
             }
         }
 
         // Handle payment and order completion
-        if (oldStatus == SprayStatus.SPRAY_COMPLETED && (personRole.hasRole(PersonRole.SPRAYER) || personRole.hasRole(PersonRole.RECEPTIONIST))) {
+        if (oldStatus == SprayStatus.SPRAY_COMPLETED) {
             BigDecimal paymentReceivedAmount = sprayOrder.getPaymentReceivedAmount();
             if (paymentReceivedAmount == null || paymentReceivedAmount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new RuntimeException("Invalid payment amount. Payment must be greater than zero.");
