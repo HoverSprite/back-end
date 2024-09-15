@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/spray-sessions")
-//@CrossOrigin(allowedOriginPatterns = "*", allowCredentials = "true")
 public class SpraySessionController {
 
     @Autowired

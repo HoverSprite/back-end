@@ -80,14 +80,14 @@ public class CombinedOrderController {
     }
 
     @GetMapping("/{orderId}/available-sprayers")
-    @PreAuthorize("hasRole('RECEPTIONIST', 'FARMER', 'SPRAYER')")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'FARMER', 'SPRAYER')")
     public ResponseEntity<Map<PersonExpertise, List<Pair<PersonDTO, Integer>>>> getSortedSprayers(@PathVariable Long orderId) {
         Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> sortedSprayers = sprayOrderService.getSortedAvailableSprayers(orderId);
         return ResponseEntity.ok(sortedSprayers);
     }
 
     @GetMapping("/sprayer/available")
-    @PreAuthorize("hasRole('SPRAYER')")
+    @PreAuthorize("hasAnyRole('SPRAYER')")
     public List<SprayOrderDTO> viewAssignedAvailableOrders() {
         Long userId = SecurityUtils.getCurrentUserId();
         return sprayOrderService.getAvailableSprayOrdersBySprayer(userId);
