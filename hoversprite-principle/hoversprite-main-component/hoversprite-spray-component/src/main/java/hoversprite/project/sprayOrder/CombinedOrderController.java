@@ -34,25 +34,18 @@ public class CombinedOrderController {
         return sprayOrderService.save(userId, sprayOrder, role);
     }
 
-
-    @GetMapping("/farmer")
-    @PreAuthorize("hasRole('FARMER')")
-    public List<SprayOrderDTO> viewFarmerOrders() {
+    @GetMapping
+    @PreAuthorize("hasAnyRole('FARMER', 'RECEPTIONIST', 'SPRAYER')")
+    public ResponseEntity<List<SprayOrderDTO>> viewOrders() {
+        PersonRole role = SecurityUtils.getCurrentUserRole();
         Long userId = SecurityUtils.getCurrentUserId();
-        return sprayOrderService.getOrdersByUser(userId);
-    }
 
-    @GetMapping("/receptionist")
-    @PreAuthorize("hasRole('RECEPTIONIST')")
-    public List<SprayOrderDTO> viewAllOrders() {
-        return sprayOrderService.findAll();
-    }
-
-    @GetMapping("/sprayer")
-    @PreAuthorize("hasRole('SPRAYER')")
-    public List<SprayOrderDTO> viewAssignedOrders() {
-        Long userId = SecurityUtils.getCurrentUserId();
-        return sprayOrderService.getOrdersBySprayer(userId);
+        return switch (role) {
+            case FARMER -> ResponseEntity.ok(sprayOrderService.getOrdersByUser(userId));
+            case SPRAYER -> ResponseEntity.ok(sprayOrderService.getOrdersBySprayer(userId));
+            case RECEPTIONIST, ADMIN -> ResponseEntity.ok(sprayOrderService.findAll());
+            default -> ResponseEntity.badRequest().build();
+        };
     }
 
     @GetMapping("/{orderId}")
@@ -61,6 +54,7 @@ public class CombinedOrderController {
         PersonRole role = SecurityUtils.getCurrentUserRole();
         Long userId = SecurityUtils.getCurrentUserId();
 
+        try {
         if (role == PersonRole.FARMER || role == PersonRole.SPRAYER) {
             SprayOrderResponse order = sprayOrderService.findSprayOrderDetails(orderId);
 
@@ -72,6 +66,8 @@ public class CombinedOrderController {
             }
         } else {
             return ResponseEntity.ok(sprayOrderService.findSprayOrderDetails(orderId));
+        }} catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -84,7 +80,7 @@ public class CombinedOrderController {
     }
 
     @GetMapping("/{orderId}/available-sprayers")
-    @PreAuthorize("hasRole('RECEPTIONIST')")
+    @PreAuthorize("hasRole('RECEPTIONIST', 'FARMER', 'SPRAYER')")
     public ResponseEntity<Map<PersonExpertise, List<Pair<PersonDTO, Integer>>>> getSortedSprayers(@PathVariable Long orderId) {
         Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> sortedSprayers = sprayOrderService.getSortedAvailableSprayers(orderId);
         return ResponseEntity.ok(sortedSprayers);

@@ -11,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -82,13 +84,15 @@ public class AuthController {
         final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
 
         // Set refresh token as HttpOnly cookie
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true); // if using HTTPS
-        cookie.setPath("/");
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(refreshTokenDuration)
+                .build();
 
-        return ResponseEntity.ok(new AuthenticationResponse(accessToken));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(new AuthenticationResponse(accessToken));
     }
 
     @PostMapping("/verify")
@@ -105,11 +109,16 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        logger.info("Refresh token endpoint hit");
+
         // Get refresh token from cookie
         Cookie[] cookies = request.getCookies();
+        logger.info("Cookies received: " + (cookies != null ? cookies.length : "null"));
+
         String refreshToken = null;
         if (cookies != null) {
             for (Cookie cookie : cookies) {
+                logger.info("Cookie: " + cookie.getName() + "=" + cookie.getValue());
                 if (cookie.getName().equals("refreshToken")) {
                     refreshToken = cookie.getValue();
                     break;
@@ -118,6 +127,7 @@ public class AuthController {
         }
 
         if (refreshToken == null) {
+            logger.warn("Refresh token is missing in the request");
             return ResponseEntity.badRequest().body("Refresh token is missing");
         }
 

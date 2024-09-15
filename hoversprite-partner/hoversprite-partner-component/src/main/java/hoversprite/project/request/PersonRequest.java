@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PersonRequest {
+        private Long id;
         private String fullName;
         private String phoneNumber;
         private String homeAddress;
