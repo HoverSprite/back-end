@@ -80,7 +80,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     private void authenticateUser(String username, HttpServletRequest request, HttpServletResponse response) {
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+            CustomUserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
             String token = Optional.ofNullable(request.getHeader(AUTHORIZATION_HEADER))
                     .filter(header -> header.startsWith(BEARER_PREFIX))
                     .map(header -> header.substring(BEARER_PREFIX.length()))
@@ -93,7 +93,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
                 if (!token.equals(findRefreshToken(request))) {
-                    String newAccessToken = jwtUtil.generateToken(userDetails);
+                    String newAccessToken = jwtUtil.generateToken(userDetails, userDetails.getProvider());
                     response.setHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + newAccessToken);
                 }
             }

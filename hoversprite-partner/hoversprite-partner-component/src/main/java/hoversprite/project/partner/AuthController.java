@@ -64,20 +64,11 @@ public class AuthController {
         personRequest.setPasswordHash(passwordEncoder.encode(personRequest.getPasswordHash()));
         PersonDTO newPerson = personService.addPerson(personRequest);
 
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(newPerson.getEmailAddress());
+        final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(newPerson.getEmailAddress());
 
-        final String accessToken = jwtUtil.generateToken(userDetails);
-        final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
-
-        // Set refresh token as HttpOnly cookie
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .path("/")
-                .maxAge(refreshTokenDuration)
-                .build();
+        final String accessToken = jwtUtil.generateToken(userDetails, newPerson.getOauthProvider());
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new AuthenticationResponse(accessToken));
     }
 
@@ -92,10 +83,10 @@ public class AuthController {
         personRequest.setPasswordHash(null);
         PersonDTO newPerson = personService.addPerson(personRequest);
 
-        final UserDetails userDetails = customOAuth2UserService.loadUserByUsername(newPerson.getEmailAddress());
+        final CustomUserDetails userDetails = customOAuth2UserService.loadUserByUsername(newPerson.getEmailAddress());
 
-        final String accessToken = jwtUtil.generateToken(userDetails);
-        final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+        final String accessToken = jwtUtil.generateToken(userDetails, newPerson.getOauthProvider());
+        final String refreshToken = jwtUtil.generateRefreshToken(userDetails, newPerson.getOauthProvider());
 
         // Set refresh token as HttpOnly cookie
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
@@ -126,10 +117,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect username or password");
         }
 
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
+        final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
 
-        final String accessToken = jwtUtil.generateToken(userDetails);
-        final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+        final String accessToken = jwtUtil.generateToken(userDetails, userDetails.getProvider());
+        final String refreshToken = jwtUtil.generateRefreshToken(userDetails, userDetails.getProvider());
 
         // Set refresh token as HttpOnly cookie
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
@@ -181,11 +172,11 @@ public class AuthController {
 
         try {
             String username = jwtUtil.extractUsername(refreshToken);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            CustomUserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (jwtUtil.validateToken(refreshToken, userDetails)) {
-                String newAccessToken = jwtUtil.generateToken(userDetails);
-                String newRefreshToken = jwtUtil.generateRefreshToken(userDetails);
+                String newAccessToken = jwtUtil.generateToken(userDetails, userDetails.getProvider());
+                String newRefreshToken = jwtUtil.generateRefreshToken(userDetails, userDetails.getProvider());
 
                 // Set new refresh token as HttpOnly cookie
                 Cookie newCookie = new Cookie("refreshToken", newRefreshToken);

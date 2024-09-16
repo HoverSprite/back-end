@@ -30,14 +30,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return user;
     }
 
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         PersonDTO person = personGlobalService.findByEmailAddress(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        return new CustomOAuthUserDetails(
+        return new CustomUserDetails(
                 person.getEmailAddress(),
+                null,
                 person.getId(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + person.getRole().name()))
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + person.getRole().name())),
+                person.getOauthProvider(),
+                true
         );
     }
 }

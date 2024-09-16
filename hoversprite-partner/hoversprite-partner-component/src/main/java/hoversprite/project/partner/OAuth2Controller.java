@@ -1,8 +1,6 @@
 package hoversprite.project.partner;
 
-import hoversprite.project.jwt.CustomUserDetailsService;
-import hoversprite.project.jwt.JwtRequestFilter;
-import hoversprite.project.jwt.JwtUtil;
+import hoversprite.project.jwt.*;
 import hoversprite.project.request.PersonRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -35,7 +33,7 @@ public class OAuth2Controller {
     @Autowired
     private PersonService personService;
 
-    private final CustomUserDetailsService userDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -43,8 +41,8 @@ public class OAuth2Controller {
     @Autowired
     private ClientRegistrationRepository clientRegistrationRepository;
 
-    public OAuth2Controller(CustomUserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    public OAuth2Controller(CustomOAuth2UserService customOAuth2UserService) {
+        this.customOAuth2UserService = customOAuth2UserService;
     }
 
     @GetMapping("/callback")
@@ -86,9 +84,9 @@ public class OAuth2Controller {
             // User exists, but we need to check if they were created via OAuth2 or normal signup
             PersonDTO person = personService.findByEmailAddress(email).orElseThrow(() -> new RuntimeException("No account found by this email."));
             if (person.getOauthProvider().equals(provider)) {
-                final UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                final String accessToken = jwtUtil.generateToken(userDetails);
-                final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+                final CustomUserDetails userDetails = customOAuth2UserService.loadUserByUsername(email);
+                final String accessToken = jwtUtil.generateToken(userDetails, person.getOauthProvider());
+                final String refreshToken = jwtUtil.generateRefreshToken(userDetails, person.getOauthProvider());
 
                 addRefreshTokenCookie(response, refreshToken);
 

@@ -30,11 +30,14 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(CustomUserDetails userDetails, String provider) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()));
+        if (provider != null && !provider.isEmpty()) {
+            claims.put("provider", provider);
+        }
         return createToken(claims, userDetails.getUsername(), expiration);
     }
 
@@ -43,12 +46,18 @@ public class JwtUtil {
         claims.put("email", email);
         claims.put("name", name);
         claims.put("picture", picture);
-        claims.put("provider", provider);
+        if (provider != null && !provider.isEmpty()) {
+            claims.put("provider", provider);
+        }
         return createToken(claims, email, expiration);
     }
 
-    public String generateRefreshToken(UserDetails userDetails) {
-        return createToken(new HashMap<>(), userDetails.getUsername(), refreshExpiration);
+    public String generateRefreshToken(UserDetails userDetails, String provider) {
+        Map<String, Object> claims = new HashMap<>();
+        if (provider != null && !provider.isEmpty()) {
+            claims.put("provider", provider);
+        }
+        return createToken(claims, userDetails.getUsername(), refreshExpiration);
     }
 
     private String createToken(Map<String, Object> claims, String subject, Long expiration) {
@@ -97,5 +106,9 @@ public class JwtUtil {
             List<String> roles = (List<String>) claims.get("roles");
             return roles != null ? roles : Collections.emptyList();
         });
+    }
+
+    public String extractProvider(String token) {
+        return extractClaim(token, claims -> claims.get("provider", String.class));
     }
 }

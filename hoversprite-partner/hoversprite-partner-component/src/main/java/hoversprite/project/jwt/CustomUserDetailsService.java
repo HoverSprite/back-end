@@ -26,15 +26,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     private PersonGlobalService personGlobalService;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         PersonDTO person = personGlobalService.findByEmailAddress(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         return new CustomUserDetails(
                 person.getEmailAddress(),
                 person.getPasswordHash(),
+                person.getId(),
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + person.getRole().name())),
-                person.getId()
+                person.getOauthProvider(),
+                true
         );
     }
 }
