@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,10 +15,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtRequestFilter.class);
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String REFRESH_TOKEN_COOKIE = "refreshToken";
 
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtUtil jwtUtil;
@@ -32,61 +35,80 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        logger.info("JwtRequestFilter processing request to: {}", request.getRequestURI());
 
-        logger.info("JwtRequestFilter processing request to: " + request.getRequestURI());
-
-        final String authorizationHeader = request.getHeader("Authorization");
-        String username = null;
-        String jwt = null;
-        String refreshToken = null;
-
-        // Check for access token in Authorization header
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            try {
-                username = jwtUtil.extractUsername(jwt);
-            } catch (Exception e) {
-                logger.error("Error extracting username from access token", e);
-            }
+        if (request.getRequestURI().contains("/oauth2/") || request.getRequestURI().contains("/login/")) {
+            chain.doFilter(request, response);
+            return;
+        }
+        try {
+            Optional<String> username = extractUsername(request);
+            username.ifPresent(name -> authenticateUser(name, request, response));
+        } catch (Exception e) {
+            logger.error("Error in JwtRequestFilter", e);
         }
 
-        // Check for refresh token in cookies
+        chain.doFilter(request, response);
+    }
+
+    private Optional<String> extractUsername(HttpServletRequest request) {
+        Optional<String> accessTokenUsername = extractUsernameFromHeader(request);
+        return accessTokenUsername.isPresent() ? accessTokenUsername : extractUsernameFromCookie(request);
+    }
+
+    private Optional<String> extractUsernameFromHeader(HttpServletRequest request) {
+        String authHeader = request.getHeader(AUTHORIZATION_HEADER);
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            String jwt = authHeader.substring(BEARER_PREFIX.length());
+            return Optional.ofNullable(jwtUtil.extractUsername(jwt));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> extractUsernameFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
-        logger.info("Cookies in request: " + (cookies != null ? cookies.length : "null"));
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                logger.info("Cookie: " + cookie.getName() + "=" + cookie.getValue());
-                if (cookie.getName().equals("refreshToken")) {
-                    refreshToken = cookie.getValue();
+                if (REFRESH_TOKEN_COOKIE.equals(cookie.getName())) {
                     logger.info("Refresh token found in cookie");
-                    break;
+                    return Optional.ofNullable(jwtUtil.extractUsername(cookie.getValue()));
                 }
             }
         }
+        return Optional.empty();
+    }
 
-        if (username == null && refreshToken != null) {
-            try {
-                username = jwtUtil.extractUsername(refreshToken);
-            } catch (Exception e) {
-                logger.error("Error extracting username from refresh token", e);
-            }
-        }
+    private void authenticateUser(String username, HttpServletRequest request, HttpServletResponse response) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+            String token = Optional.ofNullable(request.getHeader(AUTHORIZATION_HEADER))
+                    .filter(header -> header.startsWith(BEARER_PREFIX))
+                    .map(header -> header.substring(BEARER_PREFIX.length()))
+                    .orElseGet(() -> findRefreshToken(request));
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(username);
-            if (jwtUtil.validateToken(jwt != null ? jwt : refreshToken, userDetails)) {
+            if (jwtUtil.validateToken(token, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                // If we authenticated with refresh token, generate a new access token
-                if (jwt == null && refreshToken != null) {
+                if (!token.equals(findRefreshToken(request))) {
                     String newAccessToken = jwtUtil.generateToken(userDetails);
-                    response.setHeader("Authorization", "Bearer " + newAccessToken);
+                    response.setHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + newAccessToken);
                 }
             }
         }
-        chain.doFilter(request, response);
+    }
+
+    private String findRefreshToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (REFRESH_TOKEN_COOKIE.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

@@ -11,4 +11,6 @@ interface PersonService extends PersonGlobalService {
     Optional<PersonDTO> loadUserByUsername(String username);
 
     boolean existsByEmail(String emailAddress);
+
+    PersonDTO updatePerson(PersonDTO personDTO);
 }

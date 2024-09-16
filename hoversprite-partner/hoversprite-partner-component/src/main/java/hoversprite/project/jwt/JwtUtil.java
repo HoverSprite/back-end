@@ -38,6 +38,15 @@ public class JwtUtil {
         return createToken(claims, userDetails.getUsername(), expiration);
     }
 
+    public String generateTokenWithUserInfo(String email, String name, String picture, String tempPassword, String provider) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", email);
+        claims.put("name", name);
+        claims.put("picture", picture);
+        claims.put("provider", provider);
+        return createToken(claims, email, expiration);
+    }
+
     public String generateRefreshToken(UserDetails userDetails) {
         return createToken(new HashMap<>(), userDetails.getUsername(), refreshExpiration);
     }

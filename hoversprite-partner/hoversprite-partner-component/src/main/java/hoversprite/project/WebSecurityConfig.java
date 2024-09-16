@@ -1,7 +1,5 @@
 package hoversprite.project;
-import hoversprite.project.jwt.CustomUserDetailsService;
-import hoversprite.project.jwt.JwtRequestFilter;
-import hoversprite.project.jwt.JwtUtil;
+import hoversprite.project.jwt.*;
 import hoversprite.project.util.DebugFilter;
 import jakarta.servlet.Filter;
 import org.slf4j.Logger;
@@ -11,7 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,9 +19,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -39,11 +33,19 @@ public class WebSecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final JwtRequestFilter jwtRequestFilter;
     private final DebugFilter debugFilter;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
-    public WebSecurityConfig(CustomUserDetailsService userDetailsService, JwtRequestFilter jwtRequestFilter, DebugFilter debugFilter) {
+    private CustomAuthorizationRequestResolver customAuthorizationRequestResolver;
+
+    public WebSecurityConfig(CustomUserDetailsService userDetailsService, JwtRequestFilter jwtRequestFilter, DebugFilter debugFilter, OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler
+    , CustomOAuth2UserService customOAuth2UserService, CustomAuthorizationRequestResolver customAuthorizationRequestResolver) {
         this.userDetailsService = userDetailsService;
         this.jwtRequestFilter = jwtRequestFilter;
         this.debugFilter = debugFilter;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.customAuthorizationRequestResolver = customAuthorizationRequestResolver;
     }
 
     @Bean
@@ -53,9 +55,19 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/test/**").permitAll()
+                        .requestMatchers("/auth/**", "/test/**", "/oauth2/**", "/login/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestResolver(customAuthorizationRequestResolver)
+                        )
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/oauth2/callback/*")
+                        ))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )

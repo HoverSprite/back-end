@@ -35,6 +35,9 @@ class Person {
     @Column(name = "PASSWORD_HASH")
     private String passwordHash;
 
+    @Column(name = "OAUTH_PROVIDER")
+    private String oauthProvider;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "ROLE")
     private PersonRole role;

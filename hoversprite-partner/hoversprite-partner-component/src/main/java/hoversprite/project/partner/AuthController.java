@@ -22,6 +22,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/auth")
@@ -36,14 +38,18 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
+
+    private final CustomOAuth2UserService customOAuth2UserService;
     private final PersonService personService;
 
     public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                          CustomUserDetailsService userDetailsService, PersonService personService) {
+                          CustomUserDetailsService userDetailsService, PersonService personService,
+                          CustomOAuth2UserService customOAuth2UserService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.personService = personService;
+        this.customOAuth2UserService = customOAuth2UserService;
     }
 
     @PostMapping("/signup")
@@ -58,7 +64,49 @@ public class AuthController {
         personRequest.setPasswordHash(passwordEncoder.encode(personRequest.getPasswordHash()));
         PersonDTO newPerson = personService.addPerson(personRequest);
 
-        return ResponseEntity.ok(newPerson);
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(newPerson.getEmailAddress());
+
+        final String accessToken = jwtUtil.generateToken(userDetails);
+        final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+
+        // Set refresh token as HttpOnly cookie
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(refreshTokenDuration)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(new AuthenticationResponse(accessToken));
+    }
+
+    @PostMapping("/oauth2-signup")
+    public ResponseEntity<?> oauth2Signup(@RequestBody PersonRequest personRequest) {
+
+        if (personService.existsByEmail(personRequest.getEmailAddress())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Error: Email is already in use!");
+        }
+        personRequest.setPasswordHash(null);
+        PersonDTO newPerson = personService.addPerson(personRequest);
+
+        final UserDetails userDetails = customOAuth2UserService.loadUserByUsername(newPerson.getEmailAddress());
+
+        final String accessToken = jwtUtil.generateToken(userDetails);
+        final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+
+        // Set refresh token as HttpOnly cookie
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(refreshTokenDuration)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(new AuthenticationResponse(accessToken));
     }
 
     @GetMapping("/email")

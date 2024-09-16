@@ -14,6 +14,7 @@ public class PersonRequest {
     private String phoneNumber;
     private String homeAddress;
     private String emailAddress;
+    private String oauthProvider;
     private PersonRole role;
     private PersonExpertise expertise;
     private String profilePictureUrl;

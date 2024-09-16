@@ -44,6 +44,14 @@ class PersonServiceImpl implements PersonService {
     }
 
     @Override
+    public PersonDTO updatePerson(PersonDTO personDTO) {
+        Person person = personRepository.findById(personDTO.getId())
+                .orElseThrow(() -> new RuntimeException("The person cannot be found to update."));
+        person.setOauthProvider(personDTO.getOauthProvider());
+        return PersonMapper.INSTANCE.toDto(personRepository.save(person));
+    }
+
+    @Override
     public boolean isEmailTaken(String emailAddress) {
         return personRepository.findAll().stream()
                 .anyMatch(person -> person.getEmailAddress().equalsIgnoreCase(emailAddress));

@@ -15,6 +15,7 @@ public class PersonDTO {
     private String homeAddress;
     private String emailAddress;
     private String passwordHash;
+    private String oauthProvider;
     private PersonRole role;
     private PersonExpertise expertise;
     private String profilePictureUrl;

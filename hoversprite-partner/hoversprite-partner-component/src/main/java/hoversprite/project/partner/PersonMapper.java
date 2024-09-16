@@ -12,5 +12,7 @@ interface PersonMapper {
     Person toEntity(PersonRequest request);
     PersonDTO toDto(Person entity);
 
+    Person toEntitySave(PersonDTO personDTO);
+
     PersonAuthor toAuthor(PersonDTO personDTO);
 }
