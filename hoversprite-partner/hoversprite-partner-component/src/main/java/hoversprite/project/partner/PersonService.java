@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 interface PersonService extends PersonGlobalService {
-    PersonDTO addPerson(PersonRequest person);
 
     Optional<PersonDTO> loadUserByUsername(String username);
 

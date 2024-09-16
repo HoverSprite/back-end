@@ -1,6 +1,7 @@
 package hoversprite.project.partner;
 
 import hoversprite.project.common.domain.PersonExpertise;
+import hoversprite.project.request.PersonRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,8 @@ import java.util.Optional;
 public interface PersonGlobalService {
 
     List<PersonDTO> getPersonList();
+
+    PersonDTO addPerson(PersonRequest person);
 
     boolean isEmailTaken(String emailAddress);
 
