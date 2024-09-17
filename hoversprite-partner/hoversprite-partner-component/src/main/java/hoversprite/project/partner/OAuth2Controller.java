@@ -90,7 +90,7 @@ public class OAuth2Controller {
 
                 addRefreshTokenCookie(response, refreshToken);
 
-                return new RedirectView("http://localhost:3000/dashboard?token=" + accessToken);
+                return new RedirectView("http://localhost:3000");
             } else {
                 // Account is linked to a different OAuth2 provider
                 logger.warn("Account is already linked to a different OAuth provider: {} for email: {}",
