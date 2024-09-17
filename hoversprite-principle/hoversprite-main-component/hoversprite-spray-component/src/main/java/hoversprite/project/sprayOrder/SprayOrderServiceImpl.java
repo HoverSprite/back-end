@@ -12,6 +12,7 @@ import hoversprite.project.mapper.PersonResponseMapper;
 import hoversprite.project.mapper.SpraySessionResponseMapper;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
+import hoversprite.project.partner.PersonService;
 import hoversprite.project.payment.PaymentGlobalService;
 import hoversprite.project.payment.request.PaymentRequest;
 import hoversprite.project.request.PersonRequest;
@@ -32,6 +33,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
@@ -71,6 +73,9 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private PersonService personService;
+
 
     @Override
     public SprayOrderDTO findById(Long id) {
@@ -97,11 +102,28 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     protected SprayOrderDTO executeSave(Long userid, SprayOrderRequest sprayOrderRequest, PersonRole personRole) {
         SpraySessionRequest spraySessionRequest = sprayOrderRequest.getSpraySession();
         SprayOrder sprayOrder = SprayOrderMapper.INSTANCE.toEntitySave(sprayOrderRequest);
+
         if (personRole.hasRole(PersonRole.RECEPTIONIST)) {
             sprayOrder.setStatus(SprayStatus.CONFIRMED);
             sprayOrder.setReceptionist(Long.valueOf(userid));
+
+            // Check if the farmer exists, if not, create a new farmer
+            PersonDTO farmer = personService.findFarmerByPhoneNumber(sprayOrderRequest.getFarmer().getPhoneNumber());
+            if (farmer == null) {
+                PersonRequest newFarmerRequest = new PersonRequest();
+                newFarmerRequest.setFullName(sprayOrderRequest.getFarmer().getFullName());
+                newFarmerRequest.setPhoneNumber(sprayOrderRequest.getFarmer().getPhoneNumber());
+                newFarmerRequest.setHomeAddress(sprayOrderRequest.getLocation());
+                if (newFarmerRequest.getEmailAddress() == null || newFarmerRequest.getEmailAddress().isEmpty()) {
+                    newFarmerRequest.setEmailAddress("example@gmail.com");
+                }
+
+                farmer = personService.createFarmer(newFarmerRequest);
+            }
+            sprayOrder.setFarmer(farmer.getId());
+        } else {
+            sprayOrder.setFarmer(Long.valueOf(userid));
         }
-        sprayOrder.setFarmer(sprayOrderRequest.getFarmer().getId());
         calculateCostPerArea(sprayOrder);
         sprayOrder.setLocation(sprayOrderRequest.getLocation());
 
@@ -121,12 +143,15 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         }
         // Save the order
         SprayOrderDTO savedOrderDTO = SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(savedSprayOrder));
-//        sendConfirmationEmail(savedOrderDTO);
+        sendConfirmationEmail(savedOrderDTO);
 //         Notify the farmer about the new order
+        // Notify the farmer about the new order
         if (personRole.hasRole(PersonRole.FARMER)) {
-            notificationService.notifyFarmer(savedOrderDTO.getFarmer(), "Your spray order has been created successfully and is pending confirmation.");
+            notificationService.notifyUser(savedOrderDTO.getFarmer(), PersonRole.FARMER.toString(),
+                    "Your spray order has been created successfully and is pending confirmation.");
         } else if (personRole.hasRole(PersonRole.RECEPTIONIST)) {
-            notificationService.notifyFarmer(savedOrderDTO.getFarmer(), "A new spray order has been created and confirmed for you by a receptionist.");
+            notificationService.notifyUser(savedOrderDTO.getFarmer(), PersonRole.FARMER.toString(),
+                    "A new spray order has been created and confirmed for you by a receptionist.");
         }
         return savedOrderDTO;
     }
@@ -178,7 +203,8 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             sprayOrder.getSpraySession().setSprayOrder(existingSprayOrder.getId());
             SpraySessionDTO savedSpraySession = spraySession2GlobalService.update(userId, existingSprayOrder.getSpraySession(), sprayOrder.getSpraySession(), personRole);
             existingSprayOrder.setSpraySession(savedSpraySession.getId());
-            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order details have been updated.");
+            notificationService.notifyUser(existingSprayOrder.getFarmer(), PersonRole.FARMER.toString(),
+                    "Your spray order details have been updated.");
         }
 
         if (personRole == PersonRole.ADMIN) {
@@ -228,7 +254,8 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                             .build(), personRole);
 
             existingSprayOrder.setStatus(SprayStatus.COMPLETED);
-            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been fully completed and paid.");
+            notificationService.notifyUser(existingSprayOrder.getFarmer(), PersonRole.FARMER.toString(),
+                    "Your spray order has been fully completed and paid.");
         }
 
 
@@ -244,11 +271,13 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                 existingSprayOrder.setStatus(newStatus);
                 spraySession2GlobalService.deleteById(existingSprayOrder.getSpraySession());
                 existingSprayOrder.setSpraySession(null);
-                notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been cancelled.");
+                notificationService.notifyUser(existingSprayOrder.getFarmer(), PersonRole.FARMER.toString(),
+                        "Your spray order has been cancelled.");
             }
             if (newStatus == SprayStatus.CONFIRMED) {
                 existingSprayOrder.setStatus(newStatus);
-                notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order has been confirmed!");
+                notificationService.notifyUser(existingSprayOrder.getFarmer(), PersonRole.FARMER.toString(),
+                        "Your spray order has been confirmed!");
             }
         }
         handleConfirmed(oldStatus, sprayOrder, existingSprayOrder, userId, personRole);
@@ -319,23 +348,28 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                         assignmentRequest.setSprayOrder(existingSprayOrder.getId());
                         SprayerAssignmentDTO assignment = sprayerAssignmentGlobalService.save(userId, assignmentRequest, personRole);
                         // Notify the assigned sprayer
-                        notificationService.notifySprayer(assignment.getSprayer(), "You have been assigned to a new spray order. Order ID: " + existingSprayOrder.getId());
-                        return assignment;
+                        notificationService.notifyUser(assignment.getSprayer(), PersonRole.SPRAYER.toString(),
+                                "You have been assigned to a new spray order. Order ID: " + existingSprayOrder.getId());                        return assignment;
                     })
                     .collect(Collectors.toList());
 
             existingSprayOrder.setStatus(SprayStatus.ASSIGNED);
-            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Sprayers have been assigned to your order.");
+            notificationService.notifyUser(existingSprayOrder.getFarmer(), PersonRole.FARMER.toString(),
+                    "Sprayers have been assigned to your order.");
         }
     }
 
     private void handleSprayerActions(SprayStatus oldStatus, SprayStatus newStatus, SprayOrder existingSprayOrder) {
         if (newStatus == SprayStatus.IN_PROGRESS && oldStatus == SprayStatus.ASSIGNED) {
             existingSprayOrder.setStatus(SprayStatus.IN_PROGRESS);
-            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Your spray order is now in progress.");        }
+            notificationService.notifyUser(existingSprayOrder.getFarmer(), PersonRole.FARMER.toString(),
+                    "Your spray order is now in progress.");
+        }
         if (newStatus == SprayStatus.SPRAY_COMPLETED && oldStatus == SprayStatus.IN_PROGRESS) {
             existingSprayOrder.setStatus(SprayStatus.SPRAY_COMPLETED);
-            notificationService.notifyFarmer(existingSprayOrder.getFarmer(), "Spraying for your order has been completed. Please proceed with payment.");        }
+            notificationService.notifyUser(existingSprayOrder.getFarmer(), PersonRole.FARMER.toString(),
+                    "Spraying for your order has been completed. Please proceed with payment.");
+        }
     }
 
 
@@ -355,6 +389,23 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         List<Long> sprayOrderIds = sprayerAssignmentDTOs.stream().map(SprayerAssignmentDTO::getSprayOrder).collect(Collectors.toList());
         return sprayOrderRepository.findAllById(sprayOrderIds).stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
     }
+
+    @Override
+    public List<SprayOrderDTO> getOrdersBySprayerEmail(String emailId) {
+        // Fetch the sprayer assignments using the emailId
+        List<SprayerAssignmentDTO> sprayerAssignmentDTOs = sprayerAssignmentGlobalService.findAssignmentsForSprayerByEmail(emailId);
+
+        // Get the spray order IDs from the assignments
+        List<Long> sprayOrderIds = sprayerAssignmentDTOs.stream()
+                .map(SprayerAssignmentDTO::getSprayOrder)
+                .collect(Collectors.toList());
+
+        // Retrieve the spray orders by the IDs and map them to DTOs
+        return sprayOrderRepository.findAllById(sprayOrderIds).stream()
+                .map(SprayOrderMapper.INSTANCE::toDto)
+                .collect(Collectors.toList());
+    }
+
 
     @Override
     public List<SprayOrderDTO> getAvailableSprayOrdersBySprayer(Long sprayerId) {
@@ -425,40 +476,41 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
     }
 
-//    private void sendConfirmationEmail(SprayOrderDTO order) {
-//        PersonDTO farmer = personGlobalService.getUserByIds(List.of(order.getFarmer())).get(0);
-//        String farmerEmail = farmer.getEmailAddress();
-//
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-//        String gregorianDate = order.getDateTime().format(formatter);
-//        String lunarDate = convertToLunarDate(order.getDateTime().toLocalDate());
-//
-//        String emailSubject = "HoverSprite - Spray Order Confirmation";
-//        String emailBody = String.format(
-//                "Dear %s %s,\n\n" +
-//                        "Thank you for choosing HoverSprite for your spraying needs. Your order has been successfully booked.\n\n" +
-//                        "Order Details:\n" +
-//                        "Date (Gregorian): %s\n" +
-//                        "Date (Lunar): %s\n" +
-//                        "Time: %s\n" +
-//                        "Location: %s\n" +
-//                        "Farmland Size: %.2f decares\n" +
-//                        "Total Cost: %.2f VND\n\n" +
-//                        "We appreciate your trust in HoverSprite. Our team is committed to providing you with the best service possible.\n\n" +
-//                        "If you have any questions or need to make changes to your order, please don't hesitate to contact us.\n\n" +
-//                        "Best regards,\n" +
-//                        "The HoverSprite Team",
-//                farmer.getFirstName(), farmer.getLastName(),
-//                gregorianDate,
-//                lunarDate,
-//                order.getDateTime().format(DateTimeFormatter.ofPattern("HH:mm")),
-//                order.getLocation(),
-//                order.getArea().doubleValue(),
-//                order.getCost()
-//        );
-//
-//        emailService.sendSimpleMessage(farmerEmail, emailSubject, emailBody);
-//    }
+    private void sendConfirmationEmail(SprayOrderDTO order) {
+        PersonDTO farmer = personGlobalService.getUserByIds(List.of(order.getFarmer())).get(0);
+        String farmerEmail = farmer.getEmailAddress();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String gregorianDate = order.getDateTime().format(formatter);
+        String lunarDate = convertToLunarDate(order.getDateTime().toLocalDate());
+
+        String emailSubject = "HoverSprite - Spray Order Confirmation";
+        String emailBody = String.format(
+                "Dear %s,\n\n" +
+                        "Thank you for choosing HoverSprite for your spraying needs. Your order has been successfully booked.\n\n" +
+                        "Order Details:\n" +
+                        "Date (Gregorian): %s\n" +
+                        "Date (Lunar): %s\n" +
+                        "Time: %s\n" +
+                        "Location: %s\n" +
+                        "Farmland Size: %.2f decares\n" +
+                        "Total Cost: %.2f VND\n\n" +
+                        "We appreciate your trust in HoverSprite. Our team is committed to providing you with the best service possible.\n\n" +
+                        "If you have any questions or need to make changes to your order, please don't hesitate to contact us.\n\n" +
+                        "Best regards,\n" +
+                        "The HoverSprite Team",
+                farmer.getFullName(),  // farmer name
+                gregorianDate,         // gregorian date
+                lunarDate,             // lunar date
+                order.getDateTime().format(DateTimeFormatter.ofPattern("HH:mm")), // time
+                order.getLocation(),   // location
+                order.getArea().doubleValue(),  // area (double)
+                order.getCost()        // cost (double)
+        );
+
+
+        emailService.sendSimpleMessage(farmerEmail, emailSubject, emailBody);
+    }
 
 
     private String convertToLunarDate(LocalDate gregorianDate) {
@@ -593,7 +645,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             SprayerAssignmentDTO assignment = sprayerAssignmentGlobalService.save(null, sprayerAssignmentRequest, PersonRole.ADMIN);
 
             // Notify the assigned sprayer
-            notificationService.notifySprayer(assignment.getSprayer(),
+            notificationService.notifyUser(assignment.getSprayer(), PersonRole.SPRAYER.toString(),
                     "You have been assigned to a new spray order. Order ID: " + sprayOrderId);
         });
     }

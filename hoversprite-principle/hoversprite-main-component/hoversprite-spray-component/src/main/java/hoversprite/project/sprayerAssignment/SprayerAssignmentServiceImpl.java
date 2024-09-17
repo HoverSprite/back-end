@@ -65,6 +65,11 @@ class SprayerAssignmentServiceImpl extends AbstractService<SprayerAssignmentDTO,
     }
 
     @Override
+    public List<SprayerAssignmentDTO> findAssignmentsForSprayerByEmail(String emailId) {
+        return List.of();
+    }
+
+    @Override
     public SprayerAssignmentDTO findById(Long aLong) {
         return sprayerAssignmentRepository.findById(aLong).map(SprayerAssignmentMapper.INSTANCE::toDto).orElse(null);
     }

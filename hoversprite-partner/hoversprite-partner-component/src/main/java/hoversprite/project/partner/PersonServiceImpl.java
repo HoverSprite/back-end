@@ -3,11 +3,8 @@ package hoversprite.project.partner;
 import hoversprite.project.common.domain.PersonExpertise;
 import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.request.PersonRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -129,6 +126,26 @@ class PersonServiceImpl implements PersonService {
     public Optional<PersonDTO> findByEmailAddress(String username) {
         return loadUserByUsername(username);
     }
+    @Override
+    public PersonDTO createFarmer(PersonRequest personRequest) {
+        // Validate the phone number
+        if (!isValidPhoneNumber(personRequest.getPhoneNumber())) {
+            throw new IllegalArgumentException("Invalid phone number");
+        }
 
+        // Check if the phone number is already taken
+        if (isPhoneNumberTaken(personRequest.getPhoneNumber())) {
+            throw new IllegalArgumentException("Phone number is already in use");
+        }
+
+        // Set the role to FARMER
+        personRequest.setRole(PersonRole.FARMER);
+
+        // Create and save the new farmer
+        Person newFarmer = PersonMapper.INSTANCE.toEntity(personRequest);
+        Person savedFarmer = personRepository.save(newFarmer);
+
+        return PersonMapper.INSTANCE.toDto(savedFarmer);
+    }
 
 }

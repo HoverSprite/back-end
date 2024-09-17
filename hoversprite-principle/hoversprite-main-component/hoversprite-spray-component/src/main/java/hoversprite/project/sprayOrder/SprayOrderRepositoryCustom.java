@@ -9,4 +9,5 @@ interface SprayOrderRepositoryCustom {
     List<SprayOrder> getUnAssignedSprayOrders();
 
     List<SprayOrder> findAllAvailableSprayOrderForSprayerByIds(List<Long> ids);
+
 }

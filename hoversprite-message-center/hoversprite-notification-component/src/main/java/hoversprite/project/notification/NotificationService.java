@@ -1,7 +1,10 @@
 package hoversprite.project.notification;
 
+import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.notification.Notification;
 import hoversprite.project.notification.NotificationRepository;
+import hoversprite.project.partner.PersonDTO;
+import hoversprite.project.partner.PersonGlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -18,17 +21,23 @@ public class NotificationService {
     @Autowired
     private NotificationRepository notificationRepository;
 
-    public void notifyFarmer(Long farmerId, String message) {
-        saveAndSendNotification(farmerId, "FARMER", message);
+    @Autowired
+    private PersonGlobalService personGlobalService;
+
+    public void notifyUser(Long userId, String userRole, String message) {
+        PersonDTO person = personGlobalService.findById(userId);
+        if (person == null) {
+            throw new RuntimeException("User not found with id: " + userId);
+        }
+        String userEmail = person.getEmailAddress();
+
+        saveAndSendNotification(userId, userEmail, userRole, message);
     }
 
-    public void notifySprayer(Long sprayerId, String message) {
-        saveAndSendNotification(sprayerId, "SPRAYER", message);
-    }
-
-    private void saveAndSendNotification(Long userId, String userRole, String message) {
+    private void saveAndSendNotification(Long userId, String userEmail, String userRole, String message) {
         Notification notification = Notification.builder()
                 .userId(userId)
+                .userEmail(userEmail)
                 .userRole(userRole)
                 .message(message)
                 .createdAt(LocalDateTime.now())
@@ -37,7 +46,7 @@ public class NotificationService {
 
         notificationRepository.save(notification);
 
-        messagingTemplate.convertAndSend("/topic/" + userRole.toLowerCase() + "/" + userId, message);
+        messagingTemplate.convertAndSend("/topic/" + userEmail, message);
     }
 
     public List<Notification> getNotifications(Long userId, String userRole) {

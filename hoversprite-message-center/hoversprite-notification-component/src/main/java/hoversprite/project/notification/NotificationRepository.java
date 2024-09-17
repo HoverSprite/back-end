@@ -1,5 +1,6 @@
 package hoversprite.project.notification;
 
+import hoversprite.project.common.domain.PersonRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

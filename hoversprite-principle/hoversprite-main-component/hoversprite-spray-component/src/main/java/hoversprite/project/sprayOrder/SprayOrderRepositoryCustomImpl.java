@@ -2,15 +2,10 @@ package hoversprite.project.sprayOrder;
 
 import com.querydsl.jpa.impl.JPAQuery;
 import hoversprite.project.common.domain.SprayStatus;
-import hoversprite.project.sprayOrder.QSprayOrder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.*;
 import org.springframework.stereotype.Repository;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -45,5 +40,9 @@ class SprayOrderRepositoryCustomImpl implements SprayOrderRepositoryCustom {
                         .and(QSprayOrder.sprayOrder.id.in(ids)))
                 .fetch();
     }
+
+
+
+
 
 }
