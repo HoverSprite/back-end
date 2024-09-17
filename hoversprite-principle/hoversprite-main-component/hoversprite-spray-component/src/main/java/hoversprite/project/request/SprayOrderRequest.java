@@ -23,6 +23,7 @@ public class SprayOrderRequest {
     private CropType cropType;
     private BigDecimal area;
     private LocalDateTime dateTime;
+
     private Double cost;
     private SprayStatus status;
     private BigDecimal paymentReceivedAmount;

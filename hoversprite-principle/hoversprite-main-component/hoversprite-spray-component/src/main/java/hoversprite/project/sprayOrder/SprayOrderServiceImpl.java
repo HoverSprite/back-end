@@ -30,9 +30,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-
+import cn.hutool.core.date.ChineseDate;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -483,7 +484,6 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String gregorianDate = order.getDateTime().format(formatter);
         String lunarDate = convertToLunarDate(order.getDateTime().toLocalDate());
-
         String emailSubject = "HoverSprite - Spray Order Confirmation";
         String emailBody = String.format(
                 "Dear %s,\n\n" +
@@ -512,12 +512,54 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         emailService.sendSimpleMessage(farmerEmail, emailSubject, emailBody);
     }
 
+    private void notifyFarmerAboutSprayerAssignment(SprayOrderDTO sprayOrderDTO, List<PersonDTO> assignedSprayers) {
+        PersonDTO farmer = personGlobalService.getUserByIds(List.of(sprayOrderDTO.getFarmer())).get(0);
+        String farmerEmail = farmer.getEmailAddress();
 
-    private String convertToLunarDate(LocalDate gregorianDate) {
-        // Implement the conversion from Gregorian to Lunar date here
-        // This is a placeholder and should be replaced with actual conversion logic
-        return "DD/MM/YYYY";
+        String sprayersNames = assignedSprayers.stream()
+                .map(PersonDTO::getFullName)
+                .collect(Collectors.joining(", "));
+
+        String emailSubject = "HoverSprite - Spray Order Assigned to Sprayer(s)";
+        String emailBody = String.format(
+                "Dear %s,\n\n" +
+                        "Your spray order has been assigned to the following sprayer(s): %s.\n" +
+                        "They will be conducting the spraying service at your location.\n\n" +
+                        "Best regards,\n" +
+                        "The HoverSprite Team",
+                farmer.getFullName(),
+                sprayersNames
+        );
+
+        emailService.sendSimpleMessage(farmerEmail, emailSubject, emailBody);
     }
+
+    private void sendSprayerAssignmentEmail(Long sprayerId, PersonDTO farmer, SprayOrderDTO order) {
+        PersonDTO sprayer = personGlobalService.findById(sprayerId);
+        String sprayerEmail = sprayer.getEmailAddress();
+
+        String emailSubject = "HoverSprite - New Spray Order Assignment";
+        String emailBody = String.format(
+                "Dear %s,\n\n" +
+                        "You have been assigned to a new spray order.\n\n" +
+                        "Farmer Details:\n" +
+                        "Full Name: %s\n" +
+                        "Location: %s\n" +
+                        "Phone Number: %s\n\n" +
+                        "Please make the necessary preparations.\n\n" +
+                        "Best regards,\n" +
+                        "The HoverSprite Team",
+                sprayer.getFullName(),
+                farmer.getFullName(),
+                order.getLocation(),
+                farmer.getPhoneNumber()
+        );
+
+        emailService.sendSimpleMessage(sprayerEmail, emailSubject, emailBody);
+    }
+
+
+
 
     @Override
     public Map<PersonExpertise, List<Pair<PersonDTO, Integer>>> getSortedAvailableSprayers(Long sprayOrderId) {
@@ -630,10 +672,13 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     private void handleSprayerSelection(List<PersonDTO> selectedSprayers, SprayOrderDTO sprayOrderDTO) {
         selectedSprayers = limitToTwoSprayers(selectedSprayers);
         createAssigments(selectedSprayers, sprayOrderDTO.getId());
+        notifyFarmerAboutSprayerAssignment(sprayOrderDTO, selectedSprayers); // Send notification to farmer
     }
 
 
     private void createAssigments(List<PersonDTO> selectedSprayers, Long sprayOrderId) {
+        SprayOrderDTO sprayOrderDTO = findById(sprayOrderId);
+        PersonDTO farmer = personGlobalService.findById(sprayOrderDTO.getFarmer());
         List<SprayerAssignmentRequest> assignmentRequests = selectedSprayers.stream()
                 .map(selectedSprayer -> SprayerAssignmentRequest.builder()
                         .sprayOrder(sprayOrderId)
@@ -644,6 +689,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         assignmentRequests.forEach(sprayerAssignmentRequest -> {
             SprayerAssignmentDTO assignment = sprayerAssignmentGlobalService.save(null, sprayerAssignmentRequest, PersonRole.ADMIN);
 
+            sendSprayerAssignmentEmail(assignment.getSprayer(), farmer, sprayOrderDTO);
             // Notify the assigned sprayer
             notificationService.notifyUser(assignment.getSprayer(), PersonRole.SPRAYER.toString(),
                     "You have been assigned to a new spray order. Order ID: " + sprayOrderId);
@@ -663,5 +709,17 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                 .filter(pair -> biggerThan0 ? pair.getSecond() > 0 : pair.getSecond() == 0)
                 .map(Pair::getFirst)
                 .collect(Collectors.toList());
+    }
+
+    public String convertToLunarDate(LocalDate gregorianDate) {
+        ChineseDate lunarDate = new ChineseDate(Date.from(gregorianDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+
+        // Extract year, month, and day as numbers
+        int lunarYear = lunarDate.getChineseYear();
+        int lunarMonth = lunarDate.getMonth();  // The month as a number (1-12)
+        int lunarDay = lunarDate.getDay();  // The day as a number (1-30)
+
+        // Return in the format MM/DD/YYYY
+        return String.format("%d/%d/%d", lunarMonth, lunarDay, lunarYear);
     }
 }

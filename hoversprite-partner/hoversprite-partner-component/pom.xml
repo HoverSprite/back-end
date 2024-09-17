@@ -194,6 +194,11 @@
             <artifactId>javase</artifactId>
             <version>3.5.2</version> <!-- You can use a newer version if available -->
         </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.12</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
