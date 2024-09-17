@@ -134,6 +134,19 @@ public class AuthController {
                 .body(new AuthenticationResponse(accessToken));
     }
 
+    @PostMapping("/signout")
+    public ResponseEntity<?> signout(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body("Signed out successfully");
+    }
+
     @PostMapping("/verify")
     public ResponseEntity<?> verifyToken(@RequestBody TokenVerificationRequest request) {
         String username = jwtUtil.extractUsername(request.getToken());
