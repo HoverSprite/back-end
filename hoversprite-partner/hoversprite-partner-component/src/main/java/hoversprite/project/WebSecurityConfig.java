@@ -55,7 +55,7 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/test/**", "/oauth2/**", "/login/**").permitAll()
+                        .requestMatchers("/auth/**", "/test/**", "/oauth2/**", "/login/**", "/notifications/**", "/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -97,8 +97,8 @@ public class WebSecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**")
-                        .allowedOrigins("*")
+                registry.addMapping("/**")
+                        .allowedOriginPatterns("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .exposedHeaders("Set-Cookie")

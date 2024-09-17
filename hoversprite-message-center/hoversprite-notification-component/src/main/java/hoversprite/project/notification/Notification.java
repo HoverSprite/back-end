@@ -18,6 +18,9 @@ public class Notification {
     @Column(name = "USER_ID", nullable = false)
     private Long userId;
 
+    @Column(name = "USER_EMAIL", nullable = false)
+    private String userEmail;
+
     @Column(name = "USER_ROLE", nullable = false)
     private String userRole;
 

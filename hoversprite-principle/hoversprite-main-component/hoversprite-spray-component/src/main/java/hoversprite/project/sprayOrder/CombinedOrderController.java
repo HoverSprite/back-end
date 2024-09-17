@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/orders")
@@ -31,8 +32,14 @@ public class CombinedOrderController {
     public SprayOrderDTO createOrder(@RequestBody SprayOrderRequest sprayOrder) {
         PersonRole role = SecurityUtils.getCurrentUserRole();
         Long userId = SecurityUtils.getCurrentUserId();
+
+        // Print user ID and role
+        System.out.println("User ID: " + userId);
+        System.out.println("User Role: " + role);
+
         return sprayOrderService.save(userId, sprayOrder, role);
     }
+
 
     @GetMapping
     @PreAuthorize("hasAnyRole('FARMER', 'RECEPTIONIST', 'SPRAYER')")
@@ -92,4 +99,33 @@ public class CombinedOrderController {
         Long userId = SecurityUtils.getCurrentUserId();
         return sprayOrderService.getAvailableSprayOrdersBySprayer(userId);
     }
+
+    @GetMapping("/assigned-orders")
+    @PreAuthorize("hasRole('SPRAYER')")
+    public ResponseEntity<List<SprayOrderDTO>> getAssignedOrdersWithCoordinates() {
+        Long userId = SecurityUtils.getCurrentUserId();  // Get the current user ID
+
+        // Fetch orders assigned to the sprayer
+        List<SprayOrderDTO> assignedOrders = sprayOrderService.getOrdersBySprayer(userId);
+
+        // Filter orders that have both latitude and longitude
+        List<SprayOrderDTO> filteredOrders = assignedOrders.stream()
+                .filter(order -> order.getLatitude() != null && order.getLongitude() != null)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredOrders);
+    }
+
+    @GetMapping("/orders")
+    @PreAuthorize("hasRole('SPRAYER')")
+    public ResponseEntity<List<SprayOrderDTO>> viewAssignedOrders() {
+        Long userId = SecurityUtils.getCurrentUserId();  // Get the current user ID
+
+        // Fetch orders assigned to the sprayer
+        List<SprayOrderDTO> assignedOrders = sprayOrderService.getOrdersBySprayer(userId);
+
+        return ResponseEntity.ok(assignedOrders);
+    }
+
+
 }

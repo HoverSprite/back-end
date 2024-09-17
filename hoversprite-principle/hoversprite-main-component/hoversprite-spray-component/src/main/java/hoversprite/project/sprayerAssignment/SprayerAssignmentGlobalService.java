@@ -23,4 +23,7 @@ public interface SprayerAssignmentGlobalService  extends BaseService<SprayerAssi
     List<SprayerAssignmentDTO> findAssignmentsForSprayer(Long sprayerId);
 
     void deleteAllByIds(List<Long> ids);
+
+    List<SprayerAssignmentDTO> findAssignmentsForSprayerByEmail(String emailId);
+
 }
