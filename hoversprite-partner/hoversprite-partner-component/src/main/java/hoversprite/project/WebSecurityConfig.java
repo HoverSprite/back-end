@@ -71,7 +71,7 @@ public class WebSecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .addFilterBefore(debugFilter, UsernamePasswordAuthenticationFilter.class)
+//                .addFilterBefore(debugFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         SecurityFilterChain filterChain = http.build();
