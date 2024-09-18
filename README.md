@@ -7,7 +7,9 @@
 ![image](https://github.com/user-attachments/assets/2d771ab5-15ff-4a6a-8223-ba7564a3dba2)
 4. Setup a maven configuration, pointing to the main folder of the hoversprite-backend, setup command "clean install" for it.
 ![image](https://github.com/user-attachments/assets/4a60508a-3cf5-41c7-b05a-fdb6191bf703)
-5. If there are errors, check the target module of the one that got errors, re-set it to be generated source root again.
+5. If there are errors, check the target module of the one that got errors, re-set it to be generated source root again. Also, remember to "RELOAD MAVEN"
+![image](https://github.com/user-attachments/assets/fa7ef30e-bfda-4d4f-99d5-5a47ddcf492f)
+
 ![image](https://github.com/user-attachments/assets/231e25fe-f9cc-4564-b3d7-d256cd96fb57)
 
 6. Remember to create a hoversprite db in PostgreSQL with the port 5432, modify your password & username so it connect to the database.
@@ -17,3 +19,5 @@
 EXTRA:
 You want to create the account for sprayer and receptionist, simply import my Postman's json file to your Postman Console.
 You can add or modify the role there for different name that you would like.
+
+
