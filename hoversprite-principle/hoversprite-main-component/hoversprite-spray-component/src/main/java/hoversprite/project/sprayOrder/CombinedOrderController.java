@@ -3,12 +3,16 @@ package hoversprite.project.sprayOrder;
 import com.mysema.commons.lang.Pair;
 import hoversprite.project.common.domain.PersonExpertise;
 import hoversprite.project.common.domain.PersonRole;
+import hoversprite.project.common.domain.SprayStatus;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.response.SprayOrderResponse;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentGlobalService;
 import hoversprite.project.util.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,16 +47,39 @@ public class CombinedOrderController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('FARMER', 'RECEPTIONIST', 'SPRAYER')")
-    public ResponseEntity<List<SprayOrderDTO>> viewOrders() {
+    public ResponseEntity<Page<SprayOrderDTO>> viewOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) SprayStatus status
+    ) {
         PersonRole role = SecurityUtils.getCurrentUserRole();
         Long userId = SecurityUtils.getCurrentUserId();
 
-        return switch (role) {
-            case FARMER -> ResponseEntity.ok(sprayOrderService.getOrdersByUser(userId));
-            case SPRAYER -> ResponseEntity.ok(sprayOrderService.getOrdersBySprayer(userId));
-            case RECEPTIONIST, ADMIN -> ResponseEntity.ok(sprayOrderService.findAll());
-            default -> ResponseEntity.badRequest().build();
-        };
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SprayOrderDTO> orders;
+
+        switch (role) {
+            case FARMER:
+                orders = status == null
+                        ? sprayOrderService.getOrdersByUser(userId, pageable)
+                        : sprayOrderService.getOrdersByUserAndStatus(userId, status, pageable);
+                break;
+            case SPRAYER:
+                orders = status == null
+                        ? sprayOrderService.getOrdersBySprayer(userId, pageable)
+                        : sprayOrderService.getOrdersBySprayerAndStatus(userId, status, pageable);
+                break;
+            case RECEPTIONIST:
+            case ADMIN:
+                orders = status == null
+                        ? sprayOrderService.findAll(pageable)
+                        : sprayOrderService.findAllByStatus(status, pageable);
+                break;
+            default:
+                return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/{orderId}")
