@@ -18,6 +18,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -65,6 +66,7 @@ public class WebSecurityConfig {
                                 .authorizationRequestResolver(customAuthorizationRequestResolver)
                         )
                         .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oauth2FailureHandler())
                         .redirectionEndpoint(redirection -> redirection
                                 .baseUri("/oauth2/callback/*")
                         ))
@@ -84,6 +86,15 @@ public class WebSecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public AuthenticationFailureHandler oauth2FailureHandler() {
+        return (request, response, exception) -> {
+            logger.error("OAuth2 login failed: {}", exception.getMessage());
+            // Redirect to /signup on failure
+            response.sendRedirect("http://localhost:3000/signup?error=oauth2_failed");
+        };
     }
 
     @Bean
