@@ -27,6 +27,8 @@ import hoversprite.project.spraySession.SpraySessionDTO;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentDTO;
 import hoversprite.project.sprayerAssignment.SprayerAssignmentGlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -125,7 +127,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
         } else {
             sprayOrder.setFarmer(Long.valueOf(userid));
         }
-        calculateCostPerArea(sprayOrder);
+        sprayOrder.setCost(calculateCostPerArea(sprayOrder.getArea().doubleValue()));
         sprayOrder.setLocation(sprayOrderRequest.getLocation());
 
 
@@ -190,6 +192,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                 (oldStatus == SprayStatus.PENDING || oldStatus == null) && (newStatus == SprayStatus.PENDING)) {
             existingSprayOrder.setCropType(sprayOrder.getCropType());
             existingSprayOrder.setArea(sprayOrder.getArea());
+            existingSprayOrder.setCost(calculateCostPerArea(sprayOrder.getArea().doubleValue()));
             existingSprayOrder.setDateTime(sprayOrder.getDateTime());
             existingSprayOrder.setLocation(sprayOrder.getLocation());
             GeocodingUtil.LatLng coordinates = geocodingUtil.getCoordinates(sprayOrder.getLocation());
@@ -375,8 +378,8 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
 
 
 
-    private void calculateCostPerArea(SprayOrder sprayOrder) {
-        sprayOrder.setCost(sprayOrder.getArea().doubleValue() * COST_PER_DECARE);
+    private Double calculateCostPerArea(double value) {
+        return value * COST_PER_DECARE;
     }
 
     @Override
@@ -385,10 +388,36 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     }
 
     @Override
+    public Page<SprayOrderDTO> getOrdersByUser(long userId, Pageable pageable) {
+        return sprayOrderRepository.getOrdersByUser(userId, pageable).map(SprayOrderMapper.INSTANCE::toDto);
+    }
+
+    @Override
+    public Page<SprayOrderDTO> getOrdersByUserAndStatus(long userId, SprayStatus status, Pageable pageable) {
+        return sprayOrderRepository.getOrdersByUserAndStatus(userId, status, pageable).map(SprayOrderMapper.INSTANCE::toDto);
+    }
+
+    @Override
     public List<SprayOrderDTO> getOrdersBySprayer(Long sprayerId) {
         List<SprayerAssignmentDTO> sprayerAssignmentDTOs = sprayerAssignmentGlobalService.findAssignmentsForSprayer(sprayerId);
         List<Long> sprayOrderIds = sprayerAssignmentDTOs.stream().map(SprayerAssignmentDTO::getSprayOrder).collect(Collectors.toList());
         return sprayOrderRepository.findAllById(sprayOrderIds).stream().map(SprayOrderMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<SprayOrderDTO> getOrdersBySprayer(long sprayerId, Pageable pageable) {
+        List<SprayerAssignmentDTO> sprayerAssignmentDTOs = sprayerAssignmentGlobalService.findAssignmentsForSprayer(sprayerId);
+        List<Long> sprayOrderIds = sprayerAssignmentDTOs.stream().map(SprayerAssignmentDTO::getSprayOrder).collect(Collectors.toList());
+        Page<SprayOrder> sprayOrderPage = sprayOrderRepository.getOrdersBySprayer(sprayOrderIds, pageable);
+        return sprayOrderPage.map(SprayOrderMapper.INSTANCE::toDto);
+    }
+
+    @Override
+    public Page<SprayOrderDTO> getOrdersBySprayerAndStatus(long sprayerId, SprayStatus status, Pageable pageable) {
+        List<SprayerAssignmentDTO> sprayerAssignmentDTOs = sprayerAssignmentGlobalService.findAssignmentsForSprayer(sprayerId);
+        List<Long> sprayOrderIds = sprayerAssignmentDTOs.stream().map(SprayerAssignmentDTO::getSprayOrder).collect(Collectors.toList());
+        Page<SprayOrder> sprayOrderPage = sprayOrderRepository.getOrdersBySprayerAndStatus(sprayOrderIds, status, pageable);
+        return sprayOrderPage.map(SprayOrderMapper.INSTANCE::toDto);
     }
 
     @Override
@@ -423,7 +452,10 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     @Override
     public SprayOrderResponse findSprayOrderDetails(Long sprayOrderId) {
         SprayOrderDTO sprayOrderDTO = findById(sprayOrderId);
-        SpraySessionDTO spraySessionDTO = spraySession2GlobalService.findById(sprayOrderDTO.getSpraySession());
+        SpraySessionDTO spraySessionDTO = null;
+        if (sprayOrderDTO.getSpraySession() != null) {
+            spraySessionDTO = spraySession2GlobalService.findById(sprayOrderDTO.getSpraySession());
+        }
         List<SprayerAssignmentDTO> sprayerAssignmentDTOS = sprayerAssignmentGlobalService.findAllBySprayOrderIds(Collections.singletonList(sprayOrderId));
 
         List<SprayerAssignmentResponse> sprayerAssignmentResponses = sprayerAssignmentDTOS.stream()
@@ -437,7 +469,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
 
         List<FeedBackReponse> feedBackReponses = feedbackGlobalService.getFeedbacksBySprayOrderId(sprayOrderId);
 
-        return SprayOrderResponse.builder()
+        SprayOrderResponse.SprayOrderResponseBuilder builder = SprayOrderResponse.builder()
                 .farmer(PersonResponseMapper.INSTANCE.toReponse(personGlobalService.findById(sprayOrderDTO.getFarmer())))
                 .cropType(sprayOrderDTO.getCropType())
                 .area(sprayOrderDTO.getArea())
@@ -449,11 +481,14 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                 .sprayerAssignments(sprayerAssignmentResponses)
                 .changeAmount(sprayOrderDTO.getChangeAmount())
                 .status(sprayOrderDTO.getStatus())
-                .spraySession(SpraySessionResponseMapper.INSTANCE.toResponse(spraySessionDTO))
                 .autoAssign(sprayOrderDTO.getAutoAssign())
                 .id(sprayOrderDTO.getId())
-                .feedBacks(CollectionUtils.isEmpty(feedBackReponses) ? null : feedBackReponses)
-                .build();
+                .feedBacks(CollectionUtils.isEmpty(feedBackReponses) ? null : feedBackReponses);
+        
+        if (spraySessionDTO != null) {
+            builder.spraySession(SpraySessionResponseMapper.INSTANCE.toResponse(spraySessionDTO));
+        }
+        return  builder.build();
     }
 
     @Override
@@ -475,6 +510,16 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
 
         existingSprayOrder.setStatus(status);
         return SprayOrderMapper.INSTANCE.toDto(sprayOrderRepository.save(existingSprayOrder));
+    }
+
+    @Override
+    public Page<SprayOrderDTO> findAll(Pageable pageable) {
+        return sprayOrderRepository.findAll(pageable).map(SprayOrderMapper.INSTANCE::toDto);
+    }
+
+    @Override
+    public Page<SprayOrderDTO> findAllByStatus(SprayStatus status, Pageable pageable) {
+        return sprayOrderRepository.findAllByStatus(status, pageable).map(SprayOrderMapper.INSTANCE::toDto);
     }
 
     private void sendConfirmationEmail(SprayOrderDTO order) {

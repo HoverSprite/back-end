@@ -92,6 +92,7 @@ class SpraySession2ServiceImpl extends AbstractService<SpraySessionDTO, SpraySes
          && (!previousSpraySession.getDate().equals(updatedSpraySession.getDate())
                 || !previousSpraySession.getStartTime().equals(updatedSpraySession.getStartTime())
         )) {
+            updatedSpraySession.setSprayOrder(previousSpraySession.getSprayOrder());
             deleteById(previousSpraySession.getId());
             return SpraySessionMapper.INSTANCE.toDto(spraySessionRepository.save(updatedSpraySession));
         }
