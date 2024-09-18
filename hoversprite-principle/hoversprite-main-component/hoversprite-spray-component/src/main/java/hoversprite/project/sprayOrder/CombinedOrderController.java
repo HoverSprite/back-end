@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/orders")
-public class CombinedOrderController {
+class CombinedOrderController {
 
     @Autowired
     private SprayOrderService sprayOrderService;

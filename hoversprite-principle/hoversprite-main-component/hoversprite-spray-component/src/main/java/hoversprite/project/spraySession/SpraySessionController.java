@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/spray-sessions")
-public class SpraySessionController {
+class SpraySessionController {
 
     @Autowired
     private SpraySession2Service spraySessionService;

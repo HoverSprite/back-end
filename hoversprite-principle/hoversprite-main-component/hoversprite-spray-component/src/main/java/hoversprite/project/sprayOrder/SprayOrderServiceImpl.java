@@ -12,7 +12,6 @@ import hoversprite.project.mapper.PersonResponseMapper;
 import hoversprite.project.mapper.SpraySessionResponseMapper;
 import hoversprite.project.partner.PersonDTO;
 import hoversprite.project.partner.PersonGlobalService;
-import hoversprite.project.partner.PersonService;
 import hoversprite.project.payment.PaymentGlobalService;
 import hoversprite.project.payment.request.PaymentRequest;
 import hoversprite.project.request.PersonRequest;
@@ -76,8 +75,6 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
     @Autowired
     private NotificationService notificationService;
 
-    @Autowired
-    private PersonService personService;
 
 
     @Override
@@ -111,7 +108,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
             sprayOrder.setReceptionist(Long.valueOf(userid));
 
             // Check if the farmer exists, if not, create a new farmer
-            PersonDTO farmer = personService.findFarmerByPhoneNumber(sprayOrderRequest.getFarmer().getPhoneNumber());
+            PersonDTO farmer = personGlobalService.findFarmerByPhoneNumber(sprayOrderRequest.getFarmer().getPhoneNumber());
             if (farmer == null) {
                 PersonRequest newFarmerRequest = new PersonRequest();
                 newFarmerRequest.setFullName(sprayOrderRequest.getFarmer().getFullName());
@@ -121,7 +118,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                     newFarmerRequest.setEmailAddress("saurabhpadmakumar4@gmail.com");
                 }
 
-                farmer = personService.createFarmer(newFarmerRequest);
+                farmer = personGlobalService.createFarmer(newFarmerRequest);
             }
             sprayOrder.setFarmer(farmer.getId());
         } else {

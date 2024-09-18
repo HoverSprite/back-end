@@ -17,9 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-public class PersonController {
-
-
+class PersonController {
 
     private final PersonService personService;
 

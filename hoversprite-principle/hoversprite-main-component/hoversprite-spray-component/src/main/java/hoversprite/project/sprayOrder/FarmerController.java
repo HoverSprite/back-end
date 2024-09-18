@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user/{userId}/farmer")
-public class FarmerController {
+class FarmerController {
 
     @Autowired
     private SprayOrderService sprayOrderService;

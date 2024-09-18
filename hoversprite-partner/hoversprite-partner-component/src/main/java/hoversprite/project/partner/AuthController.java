@@ -28,7 +28,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
-public class AuthController {
+class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 

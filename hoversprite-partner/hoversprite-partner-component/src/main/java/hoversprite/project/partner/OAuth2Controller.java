@@ -26,7 +26,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/oauth2")
-public class OAuth2Controller {
+class OAuth2Controller {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtRequestFilter.class);
 

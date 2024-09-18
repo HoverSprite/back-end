@@ -23,35 +23,13 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class FeedbackServiceImpl implements FeedbackService {
+class FeedbackServiceImpl implements FeedbackService {
 
     @Autowired
     private FeedbackRepository feedbackRepository;
 
     @Autowired
     private ImageGlobalService imageGlobalService;
-
-//    @Override
-//    public FeedbackDTO createFeedback(FeedbackDTO feedbackDTO) {
-//        SprayOrderDTO sprayOrderDTO = sprayOrderGlobalService.findById(feedbackDTO.getSprayOrder());
-//        if (sprayOrderDTO == null) {
-//            throw new RuntimeException("Spray order not found with id: " + feedbackDTO.getSprayOrder());
-//        }
-//
-//        if (sprayOrderDTO.getStatus() != SprayStatus.COMPLETED) {
-//            throw new RuntimeException("Feedback can only be given for completed orders.");
-//        }
-//
-////        if (feedbackDTO.getImageUrls() != null && feedbackDTO.getImageUrls().size() > 5) {
-////            throw new IllegalArgumentException("A maximum of 5 images can be uploaded.");
-////        }
-//
-//        Feedback feedback = feedbackMapper.toEntity(feedbackDTO);
-//        feedback.setSubmissionTime(LocalDateTime.now());
-//
-//        Feedback savedFeedback = feedbackRepository.save(feedback);
-//        return feedbackMapper.toDto(savedFeedback);
-//    }
 
     @Override
     public FeedBackReponse createFeedback(Long orderId, FeedbackRequest feedbackRequest) {

@@ -31,4 +31,6 @@ public interface PersonGlobalService {
 
     PersonDTO findFarmerByPhoneNumber(String phoneNumber);
     Optional<PersonDTO> findByEmailAddress(String username);
+
+    PersonDTO createFarmer(PersonRequest personRequest);
 }

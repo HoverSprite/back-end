@@ -21,7 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/user/{userId}/receptionist")
-public class ReceptionistController {
+class ReceptionistController {
 
     @Autowired
     private SprayOrderService sprayOrderService;

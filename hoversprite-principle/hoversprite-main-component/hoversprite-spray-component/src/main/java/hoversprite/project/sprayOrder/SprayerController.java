@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/user/{userId}/sprayer")
-public class SprayerController {
+class SprayerController {
     @Autowired
     private SprayOrderService sprayOrderService;
 
