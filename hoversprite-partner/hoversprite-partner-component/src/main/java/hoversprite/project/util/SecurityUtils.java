@@ -35,4 +35,18 @@ public class SecurityUtils {
 
         throw new IllegalStateException("User ID not found in Authentication principal");
     }
+
+    public static String getCurrentUserName() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomUserDetails) {
+            return ((CustomUserDetails) principal).getUsername();
+        }
+
+        throw new IllegalStateException("User Name not found in Authentication principal");
+    }
 }

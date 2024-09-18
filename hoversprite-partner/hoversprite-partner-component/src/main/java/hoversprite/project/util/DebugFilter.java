@@ -22,12 +22,12 @@ public class DebugFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        logger.info("DebugFilter - Request URI: {}", request.getRequestURI());
-        logger.info("DebugFilter - Request Method: {}", request.getMethod());
-        logger.info("DebugFilter - Authentication: {}", SecurityContextHolder.getContext().getAuthentication());
+//        logger.info("DebugFilter - Request URI: {}", request.getRequestURI());
+//        logger.info("DebugFilter - Request Method: {}", request.getMethod());
+//        logger.info("DebugFilter - Authentication: {}", SecurityContextHolder.getContext().getAuthentication());
 
         filterChain.doFilter(request, response);
 
-        logger.info("DebugFilter - Response Status: {}", response.getStatus());
+//        logger.info("DebugFilter - Response Status: {}", response.getStatus());
     }
 }

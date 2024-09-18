@@ -22,12 +22,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Optional;
 
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Value("${jwt.refresh-expiration}")
@@ -54,22 +56,37 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody PersonRequest personRequest) {
+        try {
+            logger.info("Received signup request for email: {}", personRequest.getEmailAddress());
+    if (personService.existsByEmail(personRequest.getEmailAddress())) {
+        return ResponseEntity
+                .badRequest()
+                .body("Error: Email is already in use!");
+    }
+        Map<String, String> validationErrors = personService.validatePersonRequest(personRequest);
 
-        if (personService.existsByEmail(personRequest.getEmailAddress())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Error: Email is already in use!");
+        if (!validationErrors.isEmpty()) {
+            throw new ValidationException("Validation failed", validationErrors);
         }
+    personRequest.setPasswordHash(passwordEncoder.encode(personRequest.getPasswordHash()));
+    PersonDTO newPerson = personService.addPerson(personRequest);
 
-        personRequest.setPasswordHash(passwordEncoder.encode(personRequest.getPasswordHash()));
-        PersonDTO newPerson = personService.addPerson(personRequest);
+    final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(newPerson.getEmailAddress());
 
-        final CustomUserDetails userDetails = userDetailsService.loadUserByUsername(newPerson.getEmailAddress());
+    final String accessToken = jwtUtil.generateToken(userDetails, newPerson.getOauthProvider());
 
-        final String accessToken = jwtUtil.generateToken(userDetails, newPerson.getOauthProvider());
-
-        return ResponseEntity.ok()
-                .body(new AuthenticationResponse(accessToken));
+    return ResponseEntity.ok(new AuthenticationResponse(accessToken));
+} catch (ValidationException e) {
+            logger.error("Validation error during signup: {}", e.getMessage());
+    return ResponseEntity
+            .badRequest()
+            .body(Map.of("errors", e.getErrors()));
+} catch (Exception e) {
+            logger.error("Unexpected error during signup", e);
+    return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(Map.of("error", "An unexpected error occurred during signup"));
+}
     }
 
     @PostMapping("/oauth2-signup")
