@@ -14,3 +14,6 @@
 ![image](https://github.com/user-attachments/assets/7925c17f-cf5f-4aea-957d-78b6315894f3)
 7. Search for class "ProjectApplication" and run it. The app will be able to run by now.
 
+EXTRA:
+You want to create the account for sprayer and receptionist, simply import my Postman's json file to your Postman Console.
+You can add or modify the role there for different name that you would like.
