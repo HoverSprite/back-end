@@ -5,6 +5,7 @@ import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.request.PersonRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,9 +27,49 @@ class PersonServiceImpl implements PersonService {
 
     @Override
     public PersonDTO addPerson(PersonRequest person) {
+
+//        Map<String, String> validationErrors = validatePersonRequest(person);
+//
+//        if (!validationErrors.isEmpty()) {
+//            throw new ValidationException("Validation failed", validationErrors);
+//        }
         Person personToSave = PersonMapper.INSTANCE.toEntity(person);
         return PersonMapper.INSTANCE.toDto(personRepository.save(personToSave));
     }
+
+    public Map<String, String> validatePersonRequest(PersonRequest personRequest) {
+        Map<String, String> errors = new HashMap<>();
+
+        if (!isValidFullName(personRequest.getFullName())) {
+            errors.put("fullName", "Invalid full name format");
+        }
+        if (!isValidPhoneNumber(personRequest.getPhoneNumber())) {
+            errors.put("phoneNumber", "Invalid phone number format");
+        }
+        if (!isValidEmailAddress(personRequest.getEmailAddress())) {
+            errors.put("emailAddress", "Invalid email format");
+        }
+        if (personRequest.getPasswordHash() != null && !isValidPassword(personRequest.getPasswordHash())) {
+            errors.put("password", "Password must contain at least one capital letter and one special character");
+        }
+
+        return errors;
+    }
+
+    private boolean isValidFullName(String fullName) {
+        String fullNameRegex = "^[A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴĐÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸ]" +
+                "[a-zàáạảãâầấậẩẫăằắặẳẵđèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ]*" +
+                "(?:[A-Z][a-zàáạảãâầấậẩẫăằắặẳẵđèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ]*)*" +  // allows second capital letter
+                "(?:[ ][A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴĐÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸ]" +
+                "[a-zàáạảãâầấậẩẫăằắặẳẵđèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ]*)*$";
+        return Pattern.matches(fullNameRegex, fullName);
+    }
+
+    private boolean isValidPassword(String password) {
+        String passwordRegex = "^(?=.*[A-Z])(?=.*[!@#$%^&*()])(?=.*[0-9])(?=.*[a-z]).{8,}$";
+        return Pattern.matches(passwordRegex, password);
+    }
+
 
     @Override
     public Optional<PersonDTO> loadUserByUsername(String username) {
