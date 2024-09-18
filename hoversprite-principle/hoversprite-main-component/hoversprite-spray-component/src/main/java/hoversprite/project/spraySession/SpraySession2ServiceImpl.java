@@ -3,7 +3,6 @@ package hoversprite.project.spraySession;
 import hoversprite.project.common.base.AbstractService;
 import hoversprite.project.common.domain.PersonRole;
 import hoversprite.project.common.validator.ValidationUtils;
-import hoversprite.project.request.SprayOrderRequest;
 import hoversprite.project.request.SpraySessionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +35,11 @@ class SpraySession2ServiceImpl extends AbstractService<SpraySessionDTO, SpraySes
     @Override
     public List<SpraySessionDTO> findSpraySessionByWeek(LocalDate date) {
         return spraySessionRepository.findSpraySessionByWeek(date).stream().map(SpraySessionMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<LocalDate, List<LocalTime>> getAvailableSlotsForWeek(LocalDate startDate) {
+        return Map.of();
     }
 
     @Override
@@ -95,11 +99,14 @@ class SpraySession2ServiceImpl extends AbstractService<SpraySessionDTO, SpraySes
     }
 
     @Override
-    public Map<LocalDate, List<LocalTime>> getAvailableSlotsForWeek(LocalDate startDate) {
-        List<SpraySessionDTO> bookedSessions = findSpraySessionByWeek(startDate);
+    public Map<LocalDate, List<LocalTime>> getAvailableSlotsForWeek(LocalDate startDate, LocalDate endDate) {
+        List<SpraySessionDTO> bookedSessions = spraySessionRepository.findSpraySessionsBetween(startDate, endDate)
+                .stream()
+                .map(SpraySessionMapper.INSTANCE::toDto)
+                .collect(Collectors.toList());
+
         Map<LocalDate, List<LocalTime>> availableSlots = new HashMap<>();
 
-        LocalDate endDate = startDate.plusDays(6);
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             List<LocalTime> availableTimesForDay = getAvailableTimesForDay(date, bookedSessions);
             availableSlots.put(date, availableTimesForDay);

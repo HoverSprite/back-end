@@ -19,8 +19,9 @@ public class SpraySessionController {
 
     @GetMapping("/available-slots")
     public ResponseEntity<Map<LocalDate, List<LocalTime>>> getAvailableSlots(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate) {
-        Map<LocalDate, List<LocalTime>> availableSlots = spraySessionService.getAvailableSlotsForWeek(startDate);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        Map<LocalDate, List<LocalTime>> availableSlots = spraySessionService.getAvailableSlotsForWeek(startDate, endDate);
         return ResponseEntity.ok(availableSlots);
     }
 }

@@ -116,7 +116,7 @@ class SprayOrderServiceImpl extends AbstractService<SprayOrderDTO, SprayOrderReq
                 newFarmerRequest.setPhoneNumber(sprayOrderRequest.getFarmer().getPhoneNumber());
                 newFarmerRequest.setHomeAddress(sprayOrderRequest.getLocation());
                 if (newFarmerRequest.getEmailAddress() == null || newFarmerRequest.getEmailAddress().isEmpty()) {
-                    newFarmerRequest.setEmailAddress("example@gmail.com");
+                    newFarmerRequest.setEmailAddress("saurabhpadmakumar4@gmail.com");
                 }
 
                 farmer = personService.createFarmer(newFarmerRequest);
