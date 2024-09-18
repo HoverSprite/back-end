@@ -9,4 +9,6 @@ interface SpraySession2RepositoryCustom {
     List<SpraySession_2> findSpraySessionByDate(LocalDate date, LocalTime startTime);
 
     List<SpraySession_2> findSpraySessionByWeek(LocalDate date);
+
+    List<SpraySession_2> findSpraySessionsBetween(LocalDate startDate, LocalDate endDate);
 }

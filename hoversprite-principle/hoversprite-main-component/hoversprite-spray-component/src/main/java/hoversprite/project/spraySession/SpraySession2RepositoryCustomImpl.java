@@ -48,4 +48,16 @@ class SpraySession2RepositoryCustomImpl implements SpraySession2RepositoryCustom
                 .where(spraySession.date.between(startOfWeek, endOfWeek))
                 .fetch();
     }
+
+    @Override
+    public List<SpraySession_2> findSpraySessionsBetween(LocalDate startDate, LocalDate endDate) {
+        QSpraySession_2 spraySession = QSpraySession_2.spraySession_2;
+
+        JPAQuery<SpraySession_2> query = new JPAQuery<>(em);
+
+        return query.select(spraySession)
+                .from(spraySession)
+                .where(spraySession.date.between(startDate, endDate))
+                .fetch();
+    }
 }
