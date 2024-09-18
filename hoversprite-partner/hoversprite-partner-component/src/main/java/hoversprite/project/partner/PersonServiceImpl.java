@@ -52,6 +52,10 @@ class PersonServiceImpl implements PersonService {
         if (personRequest.getPasswordHash() != null && !isValidPassword(personRequest.getPasswordHash())) {
             errors.put("password", "Password must contain at least one capital letter and one special character");
         }
+        if (!personRequest.getEmailAddress().endsWith("@hoversprite.com") && (personRequest.getRole() == PersonRole.RECEPTIONIST ||
+                personRequest.getRole() == PersonRole.SPRAYER)) {
+            errors.put("emailAddress", "Email must be a @hoversprite.com domain");
+        }
 
         return errors;
     }
