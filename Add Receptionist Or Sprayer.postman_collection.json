@@ -1,0 +1,70 @@
+{
+	"info": {
+		"_postman_id": "de2bfa6e-6903-4e32-b7fe-dbd247178d03",
+		"name": "Add Receptionist Or Sprayer",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25244731"
+	},
+	"item": [
+		{
+			"name": "addReceptionist",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "    {\r\n        \"fullName\": \"Receptionist 1\",\r\n        \"homeAddress\": \"72 Đ. Lê Thánh Tôn, Bến Nghé, Quận 1, Hồ Chí Minh\",\r\n        \"emailAddress\": \"receptionist@hoversprite.com\",\r\n        \"phoneNumber\": \"0971159148\",\r\n        \"passwordHash\": \"123456A23c&\",\r\n        \"role\": \"RECEPTIONIST\"\r\n    }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/auth/signup",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"auth",
+						"signup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "addSprayerExpert",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "    {\r\n        \"fullName\": \"Sprayer The First\",\r\n        \"homeAddress\": \"702 Đ. Nguyễn Văn Linh, Tân Hưng, Quận 7, Hồ Chí Minh 700000\",\r\n        \"emailAddress\": \"sprayerthefirst@hoversprite.com\",\r\n        \"phoneNumber\": \"0912345678\",\r\n        \"passwordHash\": \"123456A23c&\",\r\n        \"role\": \"SPRAYER\",\r\n        \"expertise\": \"EXPERT\"\r\n    }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/auth/signup",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"auth",
+						"signup"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
